@@ -1,0 +1,129 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+	<META HTTP-EQUIV=Refresh CONTENT="{$conf.reloadtime}; URL={$php_self}">
+	<title>netPanzer - Online Server Browser</title>
+	<link rel="stylesheet" type="text/css" href="gfx/default.css">
+</head>
+<body>
+	<div style="margin: 0px; padding: 1em 3em 1px; background-color: rgb(57, 68, 57);">
+		<div style="border-style: none; border-width: thin; background-color: rgb(221, 0, 0); padding-top: 0px; padding-bottom: 2px;">
+			<table cellpadding="0" cellspacing="0" width="100%">
+			<tbody>
+				<tr>
+					<td align="left" valign="top"><img src="gfx/leftedge.png" alt="" height="28" width="28"></td>
+					<td align="center"><h1><img src="gfx/netpanzer-lowcol.png" alt="netPanzer"></h1></td>
+					<td align="right" valign="top"><img src="gfx/rightedge.png" alt="" height="28" width="28"></td>
+				</tr>
+			</tbody>
+			</table>
+			<div class="menu">
+  		<a href="http://netpanzer.berlios.de/index.html">official netPanzer page</a>
+			</div>
+		</div>
+		<div style="border-style: none solid solid; border-color: rgb(221, 0, 0); border-width: 2px; padding: 0.5em 2em; background-color: black;">
+			<br>
+			<center><big><b>Online Server Browser</b></big></center>
+			<br>
+			<div id="force-scrollbar"></div>
+{foreach from=$gameservers item=gameserver}
+{if $gameserver.status.error != timeout}
+
+<table width="100%" height="100%" cellpadding="2" cellspacing="0" colspacing class="server">
+	<tr>
+		<td class="servername" valign="top" colspan="2"><a class="joinlink" href="netpanzer://{$gameserver.host}:{$gameserver.port}">{$gameserver.status.hostname}</a> <small>({$gameserver.host}:{$gameserver.port})</small></td>
+	</tr>
+	<tr>
+		<td width="100" valign="top">
+			<table cellspacing="0" cellpadding="2">
+				<tr>
+			 	<td align="center"><img class="mappic" src="getmapimage.php?map={$gameserver.status.mapname}&size=big" width="100" height="100" alt="Map: {$gameserver.status.mapname}"></td>
+				</tr>
+			</table>
+		</td>
+		<td valign="top">
+			<table cellspacing="2" cellpadding="0" width="100%">
+				<tr>
+					<td colspan="2">
+						<table bgcolor="#293429" cellspacing="0" cellpadding="2" width="100%">
+							<tr>
+								<td class="serverdetailsh" width="60" align="left">type:</td>
+								<td class="serverdetails" width="100" align="left">{$gameserver.status.gamestyle}</td>
+								<td class="serverdetailsh" width="80" align="left">map:</td>
+								<td class="serverdetails" align="left">{$gameserver.status.mapname} </td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+				<tr>
+					<td colspan="2">
+						<table bgcolor="#293429" cellspacing="0" cellpadding="2" width="100%">
+							<tr>
+								<td class="serverdetailsh" width="60" align="left">players:</td>
+								<td class="serverdetails" width="100" align="left">{$gameserver.status.numplayers} / {$gameserver.status.maxplayers}</td>
+								<td class="serverdetailsh" width="80" align="left">max units:</td>
+								<td class="serverdetails" align="left">{$gameserver.status.units_per_player} per player</td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+				<tr>
+					<td width="12"> </td>
+					<td>
+						<table cellspacing="0" cellpadding="2" width="100%">
+					{if $gameserver.status.numplayers == 0}
+							<tr bgcolor="#293429">
+								<td class="serverdetails" align="left">no active players</td>
+							</tr>
+					{/if}
+					{if $gameserver.status.numplayers != 0}
+							<tr bgcolor="#293429">
+								<td class="serverdetailsh" width="150" align="left">name:</td>
+								<td class="serverdetailsh" width="80" align="left">kills:</td>
+								<td class="serverdetailsh" width="80" align="left">looses:</td>
+								<td class="serverdetailsh" align="left">outposts:</td>
+							</tr>
+					{/if}
+						</table>	
+					</td>
+				</tr>
+					{if $gameserver.status.numplayers != 0}
+				<tr>
+					<td width="12"> </td>
+					<td>
+						<table cellspacing="0" cellpadding="2" width="100%">
+					{foreach from=$gameserver.status.players item=player}
+							<tr bgcolor="#293429">
+								<td class="serverdetails" width="150" align="left">{if isset ($player.flag)}<img src="./getflagimage.php?flagID={$player.flag}" align="absmiddle" alt="flagimage"> {/if}{$player.player}</td>
+								<td class="serverdetails" width="80" align="left">{$player.kills}</td>
+								<td class="serverdetails" width="80" align="left">{$player.deaths}</td>
+								<td class="serverdetails" align="left">{if isset ($player.flag)}{$player.score}{* <b> {$gameserver.status.objectivelimit-$player.score} left to win</b>*}{else}n/a{/if}</td>
+							</tr>
+					{/foreach}
+						</table>					
+					</td>
+				</tr>
+					{/if}
+				<tr>
+					<td colspan="2">
+						<table bgcolor="#293429" cellspacing="0" cellpadding="2" width="100%">
+							<tr>
+								<td class="serverdetailsh" width="60" align="left">cycle:</td>
+								<td class="serverdetails" align="left">{$gameserver.status.mapcycle}</td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<br>
+{/if}
+{/foreach}
+
+		</div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,60 @@
+// php - netPanzer - Serverbrowser
+
+Contents:
+1. Introduction / License / Used/needed libraries
+2. Installation / Usage
+3. Configuration
+4. Contact / who has done this
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+1. Introduction
+The php-netPanzer-Serverbrowser lets you find netPanzer games on the internet.
+Games are displayed in a nice html interface. If you use a newer netPanzer version
+(0.8 and newer) on Windows you can yoin a game by klicking the servername.
+
+Php-netPanzer-Serverbrowser is based on the  php-netPanzer-Toolbox which is a
+collection of classes and scripts supplying methods to query the masterserver network,
+query gameservers, display map images,.... . 
+
+1.1 License
+GNU GENERAL PUBLIC LICENSE
+See COPYING for more details.
+
+1.2 Used/needed libraries
+netPanzer - Browser uses PEAR Cache_Lite to cache an entire dataset. This is necessary
+cause of some unreachable (behind firewalls) or crashed servers. The Smarty template
+system is used to display the data.
+
+Smarty is included in this release. So you only need to install PEAR Lite_Cache.
+
+Web resources:
+PEAR / Cache_Lite: 	http://pear.php.net/package/Cache_Lite
+Smarty:				http://smarty.php.net
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2. Installation
+Unzip the files contents in any dir on your web server. Make sure the script is allowed
+to write in the cache directory. Make sure you have php, PEAR and PEAR Cache_Lite
+installed.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2.1 Usage
+You use the script by simply calling it with your webbrowser. By default it refreshes
+itsself every 45 seconds. The data cache gets refreshed every 60 seconds. Both values
+might be changed in the configuration section of index.php .
+
+	Viewing debug output:
+If you want to view the debug output, call index.php?raw=1 .
+
+	Doing a manual refresh:
+You can manually refresh the server dataset by calling index.php?refresh=1 .
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+3. Configuration:
+Configuration is divided into to parts. The global configuration in web.conf.php and a
+special configuration part in every file. Global configuration gets overriden.
+
+If you have problems understanding the configuration, simply contact me.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+4. Contact
+php - netPanzer - Browser is programmed by
+    Tobias Blersch  ( npb@schrelb.de )
+
+If you want to talk to me via irc, talk to abitos on #netpanzer at irc.freenode.net .
