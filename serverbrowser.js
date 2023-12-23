@@ -211,7 +211,6 @@ startHTTPServer() {
         res.end(`
             <html>
             <head>
-                <title>Game Servers</title>
                 <meta http-equiv="refresh" content="30"> <!-- Adiciona refresh automático -->
                 <style>
                 body {
@@ -262,7 +261,7 @@ startHTTPServer() {
 
 createHTMLTable() {
     let html = '<table class="server-table">';
-    html += '<tr><th>Port</th><th>Hostname</th><th>Map</th><th>Game Style</th><th>Players</th><th>Player Stats & Objectives</th></tr>';
+    html += '<tr><th>Porta</th><th>Servidor</th><th>Map</th><th>Estilo de Jogo</th><th>Players</th><th>Info Players</th></tr>';
 
     Object.values(this.gameservers).forEach(server => {
         const cache = server.cache || {};
