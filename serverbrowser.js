@@ -179,7 +179,7 @@ class GamesNetPanzerBrowser {
 
   // Método para criar e atualizar o ranking de jogadores
   updateRanking() {
-    const players = Object.keys(this.monthlyStats).map(playerName => ({
+    let players = Object.keys(this.monthlyStats).map(playerName => ({
       name: playerName,
       kills: this.monthlyStats[playerName].kills || 0,
       deaths: this.monthlyStats[playerName].deaths || 0,
@@ -187,6 +187,9 @@ class GamesNetPanzerBrowser {
 
     // Classifique os jogadores pelo número de kills em ordem decrescente
     players.sort((a, b) => b.kills - a.kills);
+
+    // Limitar a lista aos top 100 jogadores
+    players = players.slice(0, 10);
 
     // Adicione classificações aos jogadores
     players.forEach((player, index) => {
@@ -199,12 +202,13 @@ class GamesNetPanzerBrowser {
     fs.writeFileSync(rankingHTMLFilePath, rankingHTML);
 
     console.log(`Updated ranking: ${rankingHTMLFilePath}`);
-  }
+}
+
 
   // Crie a tabela HTML para exibir o ranking de jogadores
   createRankingHTML(players) {
-    let html = `<html><head><title>Ranking de Jogadores</title><style>${this.getCSS()}</style></head><body>`;
-    html += '<h1>Ranking de Jogadores</h1>';
+    let html = `<html><head><title>Ranking TOP 10 Jogadores</title><style>${this.getCSS()}</style></head><body>`;
+    html += '<h1>Ranking TOP 10 Jogadores</h1>';
     html += '<table>';
     html += '<tr><th>Classificação</th><th>Jogador</th><th>Kills</th><th>Deaths</th></tr>';
     players.forEach((player) => {
