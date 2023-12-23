@@ -247,7 +247,7 @@ startHTTPServer() {
             
             </head>
             <body>
-                <h1>Game Servers</h1>
+                
                 ${this.createHTMLTable()}
             </body>
             </html>
