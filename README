@@ -1,0 +1,59 @@
+# GamesNet Panzer Browser
+
+GamesNet Panzer Browser is a Node.js application that allows NetPanzer players to view information about available game servers. It connects to master servers, collects information about game servers, and displays this information on a simple web page.
+
+## How It Works
+
+The GamesNet Panzer Browser application operates as follows:
+
+1. It connects to master servers to obtain a list of available NetPanzer game servers.
+
+2. It parses the list of game servers to extract information such as IP address, port, and other relevant details.
+
+3. It starts a local HTTP server to display this information on a web page.
+
+4. Periodically, it updates game server information to ensure that players always have access to up-to-date information.
+
+## How to Use
+
+1. Make sure you have Node.js installed on your system.
+
+2. Clone or download this repository.
+
+3. Open a terminal in the project folder and run the following command to install dependencies:
+
+## npm install
+
+
+## start
+
+1. Start the game browser by running the following command:
+
+ "node app.js" 
+
+ 
+2. Open a web browser and access `http://localhost:8080` to see the list of available game servers.
+
+3. The web page will automatically refresh every 30 seconds to display updated game server information.
+
+
+## Customization
+
+You can customize the appearance of the web page by editing the `app.js` file and the `createHTMLTable()` function. You can also add more master servers to the `this.masterservers` array in the `GamesNetPanzerBrowser` class constructor if needed.
+
+## Requirements
+
+- Node.js (https://nodejs.org/)
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
+## Author
+
+Phelipe Silva Costa Figueiredo
+
+## Notes
+
+This is a sample project and can be extended and customized as needed to meet your specific requirements. Be sure to consult the NetPanzer documentation and adapt this code as necessary to meet the needs of your gaming community.
+
