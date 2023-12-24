@@ -145,9 +145,7 @@ class GamesNetPanzerBrowser {
   }
 
   updateServerInfo(server, serverInfo) {
-    // Atualize as informações do servidor com os dados reais aqui
-    // Você pode adicionar lógica para exibir as informações em tempo real ou armazená-las em um formato específico
-    // Neste exemplo, estamos apenas adicionando as informações a uma estrutura de cache
+    // Atualize as informações do servidor com os dados reais
     server.cache = serverInfo;
 
     // Verifique o mês atual
@@ -155,30 +153,22 @@ class GamesNetPanzerBrowser {
 
     // Se o mês mudou, crie um novo arquivo JSON para as estatísticas do mês anterior
     if (currentMonth !== this.currentMonth) {
-      this.currentMonth = currentMonth;
-      this.monthlyStats = {};
+        this.currentMonth = currentMonth;
+        // Não redefina this.monthlyStats aqui, para não perder os dados ao mudar de mês
     }
 
-    // Redefina as estatísticas mensais para cada jogador antes de atualizar
     serverInfo.players.forEach((player) => {
-      const playerName = player.name || 'Unknown';
-      if (!this.monthlyStats[playerName]) {
-        this.monthlyStats[playerName] = { kills: 0, deaths: 0 };
-      } else {
-        // Se o jogador já existe, redefina as estatísticas
-        this.monthlyStats[playerName].kills = 0;
-        this.monthlyStats[playerName].deaths = 0;
-      }
-    });
+        const playerName = player.name || 'Unknown';
 
-    // Atualize as estatísticas mensais com as kills e deaths do servidor
-    serverInfo.players.forEach((player) => {
-      const playerName = player.name || 'Unknown';
-      if (!this.monthlyStats[playerName]) {
-        this.monthlyStats[playerName] = { kills: 0, deaths: 0 };
-      }
-      this.monthlyStats[playerName].kills += parseInt(player.kills || 0, 10);
-      this.monthlyStats[playerName].deaths += parseInt(player.deaths || 0, 10);
+        // Inicialize as estatísticas do jogador se ele ainda não existir nas estatísticas mensais
+        if (!this.monthlyStats[playerName]) {
+            this.monthlyStats[playerName] = { kills: 0, deaths: 0 };
+        }
+
+        // Atualize as estatísticas mensais com as kills e deaths do servidor
+        // Adicionando as kills e deaths atuais às estatísticas acumuladas
+        this.monthlyStats[playerName].kills += parseInt(player.kills || 0, 10);
+        this.monthlyStats[playerName].deaths += parseInt(player.deaths || 0, 10);
     });
 
     // Salve as estatísticas mensais em um arquivo JSON
@@ -187,7 +177,8 @@ class GamesNetPanzerBrowser {
 
     // Atualize o ranking após cada atualização
     this.updateRanking();
-  }
+}
+
 
   // Método para criar e atualizar o ranking de jogadores
   updateRanking() {
