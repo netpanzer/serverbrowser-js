@@ -266,7 +266,6 @@ class GamesNetPanzerBrowser {
   // Crie a tabela HTML para exibir informações dos servidores
   createHTMLTable() {
     let html = `<html><head><title>Game Servers</title><style>${this.getCSS()}</style></head><body>`;
-    html += '<h1>Game Servers</h1>';
     html += '<table>';
     html += '<tr><th>Porta</th><th>Servidor</th><th>Map</th><th>Estilo de Jogo</th><th>Players</th><th>Info Players</th></tr>';
     Object.values(this.gameservers).forEach(server => {
