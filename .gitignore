@@ -1,8 +1,6 @@
 # Ignorar todos os arquivos dentro da pasta 'node_modules'
 node_modules/
 
-# Ignorar todos os arquivos dentro da pasta 'ranking'
-ranking/
 
 # Alternativamente, se quiser ignorar apenas arquivos JSON dentro de 'ranking', use:
-# ranking/*.json
+ranking/*.json
