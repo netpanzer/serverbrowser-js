@@ -1,6 +1,6 @@
 const dgram = require('dgram');
 const net = require('net');
-const http = require('http');
+const https = require('https'); // Importando o módulo https
 const fs = require('fs');
 const path = require('path');
 
@@ -238,7 +238,13 @@ class GamesNetPanzerBrowser {
 
   // Inicia um servidor HTTP para exibir informações dos servidores e o ranking
   startHTTPServer() {
-    const server = http.createServer((req, res) => {
+    const options = {
+      key: fs.readFileSync('/etc/letsencrypt/live/servers.netpanzer.com.br/privkey.pem'), // Substitua com o caminho da sua chave privada
+      cert: fs.readFileSync('/etc/letsencrypt/live/servers.netpanzer.com.br/fullchain.pem'), // Substitua com o caminho do seu certificado
+    };
+
+    // Cria um servidor HTTPS com as opções de certificado
+    const server = https.createServer(options, (req, res) => {
       if (req.url === '/ranking') {
         // Página de ranking de jogadores
         const rankingHTMLFilePath = path.join(__dirname, 'ranking', 'ranking.html');
@@ -252,8 +258,8 @@ class GamesNetPanzerBrowser {
       }
     });
 
-    server.listen(8080, () => {
-      console.log('HTTP server is running on port 8080');
+    server.listen(8080, () => { // Ouça na porta 8080
+      console.log('HTTPS server is running on port 8080');
     });
   }
 
