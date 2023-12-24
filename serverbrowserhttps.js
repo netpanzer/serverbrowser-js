@@ -159,6 +159,18 @@ class GamesNetPanzerBrowser {
       this.monthlyStats = {};
     }
 
+    // Redefina as estatísticas mensais para cada jogador antes de atualizar
+    serverInfo.players.forEach((player) => {
+      const playerName = player.name || 'Unknown';
+      if (!this.monthlyStats[playerName]) {
+        this.monthlyStats[playerName] = { kills: 0, deaths: 0 };
+      } else {
+        // Se o jogador já existe, redefina as estatísticas
+        this.monthlyStats[playerName].kills = 0;
+        this.monthlyStats[playerName].deaths = 0;
+      }
+    });
+
     // Atualize as estatísticas mensais com as kills e deaths do servidor
     serverInfo.players.forEach((player) => {
       const playerName = player.name || 'Unknown';
@@ -202,7 +214,7 @@ class GamesNetPanzerBrowser {
     fs.writeFileSync(rankingHTMLFilePath, rankingHTML);
 
     console.log(`Updated ranking: ${rankingHTMLFilePath}`);
-}
+  }
 
 
   // Crie a tabela HTML para exibir o ranking de jogadores
@@ -212,7 +224,7 @@ class GamesNetPanzerBrowser {
     html += '<table>';
     html += '<tr><th>Classificação</th><th>Jogador</th><th>Kills</th><th>Deaths</th></tr>';
     players.forEach((player) => {
-        html += `<tr><td>${player.rank}</td><td>${player.name}</td><td>${player.kills}</td><td>${player.deaths}</td></tr>`;
+      html += `<tr><td>${player.rank}</td><td>${player.name}</td><td>${player.kills}</td><td>${player.deaths}</td></tr>`;
     });
     html += '</table>';
 
@@ -221,7 +233,7 @@ class GamesNetPanzerBrowser {
 
     html += '</body></html>';
     return html;
-}
+  }
 
 
   // Inicia um servidor HTTP para exibir informações dos servidores e o ranking
@@ -249,7 +261,7 @@ class GamesNetPanzerBrowser {
     server.listen(8080, () => { // Ouça na porta 8080
       console.log('HTTPS server is running on port 8080');
     });
-}
+  }
 
   // Crie a tabela HTML para exibir informações dos servidores
   createHTMLTable() {
@@ -326,7 +338,7 @@ class GamesNetPanzerBrowser {
             text-decoration: underline;
         }
     `;
-}
+  }
 
   // Inicia o processo de atualização dos servidores
   startServerRefresh() {
