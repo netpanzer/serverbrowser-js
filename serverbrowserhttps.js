@@ -227,8 +227,8 @@ class GamesNetPanzerBrowser {
   // Inicia um servidor HTTP para exibir informações dos servidores e o ranking
   startHTTPServer() {
     const options = {
-      key: fs.readFileSync('path/to/your/private.key'), // Substitua com o caminho da sua chave privada
-      cert: fs.readFileSync('path/to/your/certificate.crt'), // Substitua com o caminho do seu certificado
+      key: fs.readFileSync('/etc/letsencrypt/live/servers.netpanzer.com.br/privkey.pem'), // Substitua com o caminho da sua chave privada
+      cert: fs.readFileSync('/etc/letsencrypt/live/servers.netpanzer.com.br/fullchain.pem'), // Substitua com o caminho do seu certificado
     };
 
     // Cria um servidor HTTPS com as opções de certificado
