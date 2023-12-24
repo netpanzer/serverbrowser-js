@@ -153,22 +153,35 @@ class GamesNetPanzerBrowser {
 
     // Se o mês mudou, crie um novo arquivo JSON para as estatísticas do mês anterior
     if (currentMonth !== this.currentMonth) {
-        this.currentMonth = currentMonth;
-        // Não redefina this.monthlyStats aqui, para não perder os dados ao mudar de mês
+      this.currentMonth = currentMonth;
+      this.monthlyStats = {};
     }
 
     serverInfo.players.forEach((player) => {
-        const playerName = player.name || 'Unknown';
+      const playerName = player.name || 'Unknown';
 
-        // Inicialize as estatísticas do jogador se ele ainda não existir nas estatísticas mensais
-        if (!this.monthlyStats[playerName]) {
-            this.monthlyStats[playerName] = { kills: 0, deaths: 0 };
+      // Inicialize as estatísticas do jogador se ele ainda não existir nas estatísticas mensais
+      if (!this.monthlyStats[playerName]) {
+        this.monthlyStats[playerName] = { kills: 0, deaths: 0, lastSessionKills: 0, lastSessionDeaths: 0 };
+      }
+
+      const newKills = parseInt(player.kills || 0, 10);
+      const newDeaths = parseInt(player.deaths || 0, 10);
+
+      // Verifica se o jogador está entrando novamente com estatísticas zeradas
+      if (newKills === 0 && newDeaths === 0) {
+        // Se o jogador já tem estatísticas acumuladas, mantenha-as
+        if (this.monthlyStats[playerName].kills > 0 || this.monthlyStats[playerName].deaths > 0) {
+          this.monthlyStats[playerName].lastSessionKills = 0;
+          this.monthlyStats[playerName].lastSessionDeaths = 0;
         }
-
-        // Atualize as estatísticas mensais com as kills e deaths do servidor
-        // Adicionando as kills e deaths atuais às estatísticas acumuladas
-        this.monthlyStats[playerName].kills += parseInt(player.kills || 0, 10);
-        this.monthlyStats[playerName].deaths += parseInt(player.deaths || 0, 10);
+      } else {
+        // Adiciona as novas kills e deaths às estatísticas acumuladas
+        this.monthlyStats[playerName].kills += newKills - this.monthlyStats[playerName].lastSessionKills;
+        this.monthlyStats[playerName].deaths += newDeaths - this.monthlyStats[playerName].lastSessionDeaths;
+        this.monthlyStats[playerName].lastSessionKills = newKills;
+        this.monthlyStats[playerName].lastSessionDeaths = newDeaths;
+      }
     });
 
     // Salve as estatísticas mensais em um arquivo JSON
@@ -177,7 +190,8 @@ class GamesNetPanzerBrowser {
 
     // Atualize o ranking após cada atualização
     this.updateRanking();
-}
+  }
+
 
 
   // Método para criar e atualizar o ranking de jogadores
