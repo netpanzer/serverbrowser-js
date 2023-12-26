@@ -229,7 +229,7 @@ class GamesNetPanzerBrowser {
     <style>${this.getCSS()}</style></head><body>`;
     html += '<h1>Ranking TOP 10 Jogadores</h1>';
     html += '<table>';
-    html += '<tr><th>Classificação</th><th>Jogador</th><th>Kills</th><th>Deaths</th></tr>';
+    html += '<tr><th>Classificação</th><th>Jogador</th><th>Kills</th><br><th>Deaths</th></tr>';
     players.forEach((player) => {
         html += `<tr>
                     <td data-label="Classificação">${player.rank}</td>
@@ -343,59 +343,58 @@ getCSS() {
           text-decoration: underline;
       }
 
-      /* Responsividade para dispositivos com telas menores */
       @media screen and (max-width: 768px) {
-          body {
-              font-size: 14px;
-          }
-
-          table, thead, tbody, th, td, tr {
-              display: block;
-          }
-
-          thead tr {
-              position: absolute;
-              top: -9999px;
-              left: -9999px;
-          }
-
-          tr { 
-              border: 1px solid #ccc;
-              margin-bottom: 10px; /* Espaço entre linhas da tabela */
-          }
-
-          td {
-              border: none;
-              position: relative;
-              padding-left: 50%;
-              padding-top: 20px; /* Espaço adicional para acomodar os rótulos */
-              white-space: normal; /* Permite a quebra de linha dentro da célula */
-          }
-
-          td:before {
-              /* Utiliza os rótulos para identificar os dados em dispositivos móveis */
-              position: absolute;
-              top: 0;
-              left: 6px;
-              width: 45%;
-              padding-right: 10px;
-              white-space: nowrap;
-              content: attr(data-label);
-              font-weight: bold; /* Torna os rótulos em negrito */
-          }
-
-          button {
-              padding: 12px 24px;
-              font-size: 16px;
-          }
-
-          ul {
-              padding-left: 20px; /* Espaço para a lista dentro das células */
-          }
-
-          li {
-              margin-bottom: 5px; /* Espaço entre itens da lista */
-          }
+        body {
+            font-size: 14px;
+        }
+    
+        table, thead, tbody, th, td, tr {
+            display: block;
+        }
+    
+        thead tr {
+            position: absolute;
+            top: -9999px;
+            left: -9999px;
+        }
+    
+        tr { 
+            border: 1px solid #ccc;
+            margin-bottom: 10px; /* Espaço entre linhas da tabela */
+        }
+    
+        td {
+            border: none;
+            position: relative;
+            padding-left: 50%;
+            padding-top: 20px; /* Espaço adicional para acomodar os rótulos */
+            white-space: normal; /* Permite a quebra de linha dentro da célula */
+        }
+    
+        td:before {
+            /* Utiliza os rótulos para identificar os dados em dispositivos móveis */
+            position: absolute;
+            top: 0;
+            left: 6px;
+            width: 45%;
+            padding-right: 10px;
+            white-space: nowrap;
+            content: attr(data-label);
+            font-weight: bold; /* Torna os rótulos em negrito */
+        }
+    
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+        }
+    
+        ul {
+            padding-left: 20px; /* Espaço para a lista dentro das células */
+        }
+    
+        li {
+            margin-bottom: 5px; /* Espaço entre itens da lista */
+        }
       }
 
       /* Aqui, você pode adicionar mais regras específicas para outros elementos ou situações */
