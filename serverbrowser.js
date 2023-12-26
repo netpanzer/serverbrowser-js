@@ -343,58 +343,58 @@ getCSS() {
           text-decoration: underline;
       }
 
+      /* Responsividade para dispositivos com telas menores */
       @media screen and (max-width: 768px) {
-        body {
-            font-size: 14px;
-        }
-    
-        table, thead, tbody, th, td, tr {
-            display: block;
-        }
-    
-        thead tr {
-            position: absolute;
-            top: -9999px;
-            left: -9999px;
-        }
-    
-        tr { 
-            border: 1px solid #ccc;
-            margin-bottom: 10px; /* Espaço entre linhas da tabela */
-        }
-    
-        td {
-            border: none;
-            position: relative;
-            padding-left: 50%;
-            padding-top: 20px; /* Espaço adicional para acomodar os rótulos */
-            white-space: normal; /* Permite a quebra de linha dentro da célula */
-        }
-    
-        td:before {
-            /* Utiliza os rótulos para identificar os dados em dispositivos móveis */
-            position: absolute;
-            top: 0;
-            left: 6px;
-            width: 45%;
-            padding-right: 10px;
-            white-space: nowrap;
-            content: attr(data-label);
-            font-weight: bold; /* Torna os rótulos em negrito */
-        }
-    
-        button {
-            padding: 12px 24px;
-            font-size: 16px;
-        }
-    
-        ul {
-            padding-left: 20px; /* Espaço para a lista dentro das células */
-        }
-    
-        li {
-            margin-bottom: 5px; /* Espaço entre itens da lista */
-        }
+          body {
+              font-size: 14px;
+          }
+      
+          table, thead, tbody, th, td, tr {
+              display: block;
+          }
+      
+          thead tr {
+              position: absolute;
+              top: -9999px;
+              left: -9999px;
+          }
+      
+          tr { 
+              border: 1px solid #ccc;
+              margin-bottom: 10px; /* Espaço entre linhas da tabela */
+          }
+      
+          td {
+              /* Ajustes para que o rótulo e o valor apareçam em linhas separadas */
+              border: none;
+              position: relative;
+              padding-top: 20px; /* Espaço adicional para o rótulo */
+              padding-bottom: 10px; /* Espaço abaixo do conteúdo */
+              white-space: normal; /* Permite a quebra de linha dentro da célula */
+              text-align: left; /* Alinhamento do texto */
+          }
+      
+          td:before {
+              /* Utiliza os rótulos para identificar os dados em dispositivos móveis */
+              display: block;
+              position: relative;
+              font-weight: bold; /* Torna os rótulos em negrito */
+              content: attr(data-label) ": ";
+              margin-bottom: 5px; /* Espaço entre o rótulo e o valor */
+          }
+      
+          button {
+              padding: 12px 24px;
+              font-size: 16px;
+          }
+      
+          ul {
+              padding-left: 20px; /* Espaço para a lista dentro das células */
+          }
+      
+          li {
+              margin-bottom: 5px; /* Espaço entre itens da lista */
+          }
       }
 
       /* Aqui, você pode adicionar mais regras específicas para outros elementos ou situações */
