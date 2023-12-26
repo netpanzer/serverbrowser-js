@@ -278,15 +278,17 @@ class GamesNetPanzerBrowser {
     <style>${this.getCSS()}</style></head><body>`;
     html += '<table>';
     html += '<tr><th>Porta</th><th>Servidor</th><th>Map</th><th>Estilo de Jogo</th><th>Players</th><th>Info Players</th></tr>';
+    
     Object.values(this.gameservers).forEach(server => {
         const cache = server.cache || {};
-        let playersData = '';
+        let playersData = '<ul>'; // Lista para os dados dos jogadores
 
         cache.players.forEach((player, index) => {
-            playersData += `<div class="player-stats">
-                ${player.name || 'Unknown'}: Kills: ${player.kills || '0'}, Deaths: ${player.deaths || '0'}, Score: ${player.score || '0'}, Points: ${player.points || '0'}, Flags: ${player.flag || '0'}<br>
-            </div>`;
+            playersData += `<li>
+                ${player.name || 'Unknown'}: Kills: ${player.kills || '0'}, Deaths: ${player.deaths || '0'}
+            </li>`;
         });
+        playersData += '</ul>';
 
         html += `
             <tr>
@@ -303,6 +305,7 @@ class GamesNetPanzerBrowser {
     html += '</table></body></html>';
     return html;
 }
+
 
 
 getCSS() {
@@ -340,43 +343,65 @@ getCSS() {
           text-decoration: underline;
       }
 
-      /* Responsividade */
+      /* Responsividade para dispositivos com telas menores */
       @media screen and (max-width: 768px) {
           body {
               font-size: 14px;
           }
+
           table, thead, tbody, th, td, tr {
               display: block;
           }
+
           thead tr {
               position: absolute;
               top: -9999px;
               left: -9999px;
           }
-          tr { border: 1px solid #ccc; }
+
+          tr { 
+              border: 1px solid #ccc;
+              margin-bottom: 10px; /* Espaço entre linhas da tabela */
+          }
+
           td {
               border: none;
               position: relative;
               padding-left: 50%;
+              padding-top: 20px; /* Espaço adicional para acomodar os rótulos */
+              white-space: normal; /* Permite a quebra de linha dentro da célula */
           }
+
           td:before {
+              /* Utiliza os rótulos para identificar os dados em dispositivos móveis */
               position: absolute;
-              top: 6px;
+              top: 0;
               left: 6px;
               width: 45%;
               padding-right: 10px;
               white-space: nowrap;
               content: attr(data-label);
+              font-weight: bold; /* Torna os rótulos em negrito */
           }
+
           button {
               padding: 12px 24px;
               font-size: 16px;
           }
+
+          ul {
+              padding-left: 20px; /* Espaço para a lista dentro das células */
+          }
+
+          li {
+              margin-bottom: 5px; /* Espaço entre itens da lista */
+          }
       }
 
-      /* Outras regras de estilização responsivas podem ser adicionadas aqui */
+      /* Aqui, você pode adicionar mais regras específicas para outros elementos ou situações */
   `;
 }
+
 
 
   // Inicia o processo de atualização dos servidores
