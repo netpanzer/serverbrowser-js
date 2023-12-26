@@ -224,21 +224,24 @@ class GamesNetPanzerBrowser {
 
   // Crie a tabela HTML para exibir o ranking de jogadores
   createRankingHTML(players) {
-    let html = `<html><head><title>Ranking TOP 10 Jogadores</title><style>${this.getCSS()}</style></head><body>`;
+    let html = `<html><head><title>Ranking TOP 10 Jogadores</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>${this.getCSS()}</style></head><body>`;
     html += '<h1>Ranking TOP 10 Jogadores</h1>';
     html += '<table>';
     html += '<tr><th>Classificação</th><th>Jogador</th><th>Kills</th><th>Deaths</th></tr>';
     players.forEach((player) => {
-      html += `<tr><td>${player.rank}</td><td>${player.name}</td><td>${player.kills}</td><td>${player.deaths}</td></tr>`;
+        html += `<tr>
+                    <td data-label="Classificação">${player.rank}</td>
+                    <td data-label="Jogador">${player.name}</td>
+                    <td data-label="Kills">${player.kills}</td>
+                    <td data-label="Deaths">${player.deaths}</td>
+                 </tr>`;
     });
-    html += '</table>';
-
-    // Adicione um botão ou link de "Voltar"
-    html += '<br><a href="/" style="text-decoration: none;"><button style="padding: 10px; font-size: 16px;">Voltar</button></a>';
-
-    html += '</body></html>';
+    html += '</table></body></html>';
     return html;
-  }
+}
+
 
 
   // Inicia um servidor HTTP para exibir informações dos servidores e o ranking
@@ -270,79 +273,111 @@ class GamesNetPanzerBrowser {
 
   // Crie a tabela HTML para exibir informações dos servidores
   createHTMLTable() {
-    let html = `<html><head><title>Game Servers</title><style>${this.getCSS()}</style></head><body>`;
+    let html = `<html><head><title>Game Servers</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>${this.getCSS()}</style></head><body>`;
     html += '<table>';
     html += '<tr><th>Porta</th><th>Servidor</th><th>Map</th><th>Estilo de Jogo</th><th>Players</th><th>Info Players</th></tr>';
     Object.values(this.gameservers).forEach(server => {
-      const cache = server.cache || {};
-      let playersData = '';
+        const cache = server.cache || {};
+        let playersData = '';
 
-      cache.players.forEach((player, index) => {
-        playersData += `<div class="player-stats">
-            ${player.name || 'Unknown'}: Kills: ${player.kills || '0'}, Deaths: ${player.deaths || '0'}, Score: ${player.score || '0'}, Points: ${player.points || '0'}, Flags: ${player.flag || '0'}<br>
-        </div>`;
-      });
+        cache.players.forEach((player, index) => {
+            playersData += `<div class="player-stats">
+                ${player.name || 'Unknown'}: Kills: ${player.kills || '0'}, Deaths: ${player.deaths || '0'}, Score: ${player.score || '0'}, Points: ${player.points || '0'}, Flags: ${player.flag || '0'}<br>
+            </div>`;
+        });
 
-      html += `
-          <tr>
-              <td>${server.port}</td>
-              <td>${cache.hostname || 'N/A'}</td>
-              <td>${cache.mapname || 'N/A'}</td>
-              <td>${cache.gamestyle || 'N/A'}</td>
-              <td>${cache.numplayers || '0'}</td>
-              <td>${playersData}</td>
-          </tr>
-      `;
+        html += `
+            <tr>
+                <td data-label="Porta">${server.port}</td>
+                <td data-label="Servidor">${cache.hostname || 'N/A'}</td>
+                <td data-label="Map">${cache.mapname || 'N/A'}</td>
+                <td data-label="Estilo de Jogo">${cache.gamestyle || 'N/A'}</td>
+                <td data-label="Players">${cache.numplayers || '0'}</td>
+                <td data-label="Info Players">${playersData}</td>
+            </tr>
+        `;
     });
 
-    html += '</table>';
-    html += `<div style="margin-top: 20px; text-align: center;">
-                <a href="/ranking" style="text-decoration: none;">
-                    <button style="background-color: #6b8e23; color: white; padding: 15px 30px; font-size: 20px; border: none; border-radius: 5px; cursor: pointer;">
-                        Ver Ranking
-                    </button>
-                </a>
-             </div>`;
-    html += '</body></html>';
+    html += '</table></body></html>';
     return html;
-  }
+}
 
-  getCSS() {
-    return `
-        body {
-            background-color: #4b5320; /* Cor verde oliva, comum em uniformes militares */
-            color: white;
-            font-family: 'Courier New', monospace; /* Fonte estilo máquina de escrever */
-        }
-        h1 {
-            border-bottom: 2px solid #fff;
-            padding-bottom: 10px;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #fff;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #6b8e23; /* Cor verde mais clara para cabeçalhos da tabela */
-        }
-        tr:nth-child(even) {
-            background-color: #576d4e; /* Alternar cores das linhas para melhor leitura */
-        }
-        a {
-            color: #f8f8ff;
-            text-decoration: none;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-    `;
-  }
+
+getCSS() {
+  return `
+      body {
+          background-color: #4b5320; /* Cor verde oliva, comum em uniformes militares */
+          color: white;
+          font-family: 'Courier New', monospace; /* Fonte estilo máquina de escrever */
+      }
+      h1 {
+          border-bottom: 2px solid #fff;
+          padding-bottom: 10px;
+      }
+      table {
+          border-collapse: collapse;
+          width: 100%;
+          margin-top: 20px;
+      }
+      th, td {
+          border: 1px solid #fff;
+          padding: 8px;
+          text-align: left;
+      }
+      th {
+          background-color: #6b8e23; /* Cor verde mais clara para cabeçalhos da tabela */
+      }
+      tr:nth-child(even) {
+          background-color: #576d4e; /* Alternar cores das linhas para melhor leitura */
+      }
+      a {
+          color: #f8f8ff;
+          text-decoration: none;
+      }
+      a:hover {
+          text-decoration: underline;
+      }
+
+      /* Responsividade */
+      @media screen and (max-width: 768px) {
+          body {
+              font-size: 14px;
+          }
+          table, thead, tbody, th, td, tr {
+              display: block;
+          }
+          thead tr {
+              position: absolute;
+              top: -9999px;
+              left: -9999px;
+          }
+          tr { border: 1px solid #ccc; }
+          td {
+              border: none;
+              position: relative;
+              padding-left: 50%;
+          }
+          td:before {
+              position: absolute;
+              top: 6px;
+              left: 6px;
+              width: 45%;
+              padding-right: 10px;
+              white-space: nowrap;
+              content: attr(data-label);
+          }
+          button {
+              padding: 12px 24px;
+              font-size: 16px;
+          }
+      }
+
+      /* Outras regras de estilização responsivas podem ser adicionadas aqui */
+  `;
+}
+
 
   // Inicia o processo de atualização dos servidores
   startServerRefresh() {
