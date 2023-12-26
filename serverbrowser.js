@@ -224,21 +224,24 @@ class GamesNetPanzerBrowser {
 
   // Crie a tabela HTML para exibir o ranking de jogadores
   createRankingHTML(players) {
-    let html = `<html><head><title>Ranking TOP 10 Jogadores</title><style>${this.getCSS()}</style></head><body>`;
+    let html = `<html><head><title>Ranking TOP 10 Jogadores</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>${this.getCSS()}</style></head><body>`;
     html += '<h1>Ranking TOP 10 Jogadores</h1>';
     html += '<table>';
-    html += '<tr><th>Classificação</th><th>Jogador</th><th>Kills</th><th>Deaths</th></tr>';
+    html += '<tr><th>Classificação</th><th>Jogador</th><th>Kills</th><br><th>Deaths</th></tr>';
     players.forEach((player) => {
-      html += `<tr><td>${player.rank}</td><td>${player.name}</td><td>${player.kills}</td><td>${player.deaths}</td></tr>`;
+        html += `<tr>
+                    <td data-label="Classificação">${player.rank}</td>
+                    <td data-label="Jogador">${player.name}</td>
+                    <td data-label="Kills">${player.kills}</td>
+                    <td data-label="Deaths">${player.deaths}</td>
+                 </tr>`;
     });
-    html += '</table>';
-
-    // Adicione um botão ou link de "Voltar"
-    html += '<br><a href="/" style="text-decoration: none;"><button style="padding: 10px; font-size: 16px;">Voltar</button></a>';
-
-    html += '</body></html>';
+    html += '</table></body></html>';
     return html;
-  }
+}
+
 
 
   // Inicia um servidor HTTP para exibir informações dos servidores e o ranking
@@ -270,79 +273,135 @@ class GamesNetPanzerBrowser {
 
   // Crie a tabela HTML para exibir informações dos servidores
   createHTMLTable() {
-    let html = `<html><head><title>Game Servers</title><style>${this.getCSS()}</style></head><body>`;
+    let html = `<html><head><title>Game Servers</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>${this.getCSS()}</style></head><body>`;
     html += '<table>';
     html += '<tr><th>Porta</th><th>Servidor</th><th>Map</th><th>Estilo de Jogo</th><th>Players</th><th>Info Players</th></tr>';
+    
     Object.values(this.gameservers).forEach(server => {
-      const cache = server.cache || {};
-      let playersData = '';
+        const cache = server.cache || {};
+        let playersData = '<ul>'; // Lista para os dados dos jogadores
 
-      cache.players.forEach((player, index) => {
-        playersData += `<div class="player-stats">
-            ${player.name || 'Unknown'}: Kills: ${player.kills || '0'}, Deaths: ${player.deaths || '0'}, Score: ${player.score || '0'}, Points: ${player.points || '0'}, Flags: ${player.flag || '0'}<br>
-        </div>`;
-      });
+        cache.players.forEach((player, index) => {
+            playersData += `<li>
+                ${player.name || 'Unknown'}: Kills: ${player.kills || '0'}, Deaths: ${player.deaths || '0'}
+            </li>`;
+        });
+        playersData += '</ul>';
 
-      html += `
-          <tr>
-              <td>${server.port}</td>
-              <td>${cache.hostname || 'N/A'}</td>
-              <td>${cache.mapname || 'N/A'}</td>
-              <td>${cache.gamestyle || 'N/A'}</td>
-              <td>${cache.numplayers || '0'}</td>
-              <td>${playersData}</td>
-          </tr>
-      `;
+        html += `
+            <tr>
+                <td data-label="Porta">${server.port}</td>
+                <td data-label="Servidor">${cache.hostname || 'N/A'}</td>
+                <td data-label="Map">${cache.mapname || 'N/A'}</td>
+                <td data-label="Estilo de Jogo">${cache.gamestyle || 'N/A'}</td>
+                <td data-label="Players">${cache.numplayers || '0'}</td>
+                <td data-label="Info Players">${playersData}</td>
+            </tr>
+        `;
     });
 
-    html += '</table>';
-    html += `<div style="margin-top: 20px; text-align: center;">
-                <a href="/ranking" style="text-decoration: none;">
-                    <button style="background-color: #6b8e23; color: white; padding: 15px 30px; font-size: 20px; border: none; border-radius: 5px; cursor: pointer;">
-                        Ver Ranking
-                    </button>
-                </a>
-             </div>`;
-    html += '</body></html>';
+    html += '</table></body></html>';
     return html;
-  }
+}
 
-  getCSS() {
-    return `
-        body {
-            background-color: #4b5320; /* Cor verde oliva, comum em uniformes militares */
-            color: white;
-            font-family: 'Courier New', monospace; /* Fonte estilo máquina de escrever */
-        }
-        h1 {
-            border-bottom: 2px solid #fff;
-            padding-bottom: 10px;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #fff;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #6b8e23; /* Cor verde mais clara para cabeçalhos da tabela */
-        }
-        tr:nth-child(even) {
-            background-color: #576d4e; /* Alternar cores das linhas para melhor leitura */
-        }
-        a {
-            color: #f8f8ff;
-            text-decoration: none;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-    `;
-  }
+
+
+getCSS() {
+  return `
+      body {
+          background-color: #4b5320; /* Cor verde oliva, comum em uniformes militares */
+          color: white;
+          font-family: 'Courier New', monospace; /* Fonte estilo máquina de escrever */
+      }
+      h1 {
+          border-bottom: 2px solid #fff;
+          padding-bottom: 10px;
+      }
+      table {
+          border-collapse: collapse;
+          width: 100%;
+          margin-top: 20px;
+      }
+      th, td {
+          border: 1px solid #fff;
+          padding: 8px;
+          text-align: left;
+      }
+      th {
+          background-color: #6b8e23; /* Cor verde mais clara para cabeçalhos da tabela */
+      }
+      tr:nth-child(even) {
+          background-color: #576d4e; /* Alternar cores das linhas para melhor leitura */
+      }
+      a {
+          color: #f8f8ff;
+          text-decoration: none;
+      }
+      a:hover {
+          text-decoration: underline;
+      }
+
+      /* Responsividade para dispositivos com telas menores */
+      @media screen and (max-width: 768px) {
+          body {
+              font-size: 14px;
+          }
+      
+          table, thead, tbody, th, td, tr {
+              display: block;
+          }
+      
+          thead tr {
+              position: absolute;
+              top: -9999px;
+              left: -9999px;
+          }
+      
+          tr { 
+              border: 1px solid #ccc;
+              margin-bottom: 10px; /* Espaço entre linhas da tabela */
+          }
+      
+          td {
+              /* Ajustes para que o rótulo e o valor apareçam em linhas separadas */
+              border: none;
+              position: relative;
+              padding-top: 20px; /* Espaço adicional para o rótulo */
+              padding-bottom: 10px; /* Espaço abaixo do conteúdo */
+              white-space: normal; /* Permite a quebra de linha dentro da célula */
+              text-align: left; /* Alinhamento do texto */
+          }
+      
+          td:before {
+              /* Utiliza os rótulos para identificar os dados em dispositivos móveis */
+              display: block;
+              position: relative;
+              font-weight: bold; /* Torna os rótulos em negrito */
+              content: attr(data-label) ": ";
+              margin-bottom: 5px; /* Espaço entre o rótulo e o valor */
+          }
+      
+          button {
+              padding: 12px 24px;
+              font-size: 16px;
+          }
+      
+          ul {
+              padding-left: 20px; /* Espaço para a lista dentro das células */
+          }
+      
+          li {
+              margin-bottom: 5px; /* Espaço entre itens da lista */
+          }
+      }
+
+      /* Aqui, você pode adicionar mais regras específicas para outros elementos ou situações */
+  `;
+}
+
+
 
   // Inicia o processo de atualização dos servidores
   startServerRefresh() {
