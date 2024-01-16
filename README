@@ -22,38 +22,79 @@ The GamesNet Panzer Browser application operates as follows:
 
 3. Open a terminal in the project folder and run the following command to install dependencies:
 
-## npm install
+```bash
+npm install
+
+Start
+Start the game browser by running the following command:
+
+node app.js
+
+Open a web browser and access http://localhost:8080 to see the list of available game servers.
+
+The web page will automatically refresh every 30 seconds to display updated game server information.
+
+Customization
+You can customize the appearance of the web page by editing the app.js file and the createHTMLTable() function. You can also add more master servers to the this.masterservers array in the GamesNetPanzerBrowser class constructor if needed.
 
 
-## start
+Database Setup
+To set up the database, you can use the following commands:
 
-1. Start the game browser by running the following command:
+- Updates the local package database on your Ubuntu system.
+sudo apt update
 
- "node app.js" 
+-Installs PostgreSQL and additional contrib packages, which include extra utilities and functionalities.
+sudo apt install postgresql postgresql-contrib
 
- 
-2. Open a web browser and access `http://localhost:8080` to see the list of available game servers.
+-Switches to the PostgreSQL user and opens the PostgreSQL interactive terminal (psql).
 
-3. The web page will automatically refresh every 30 seconds to display updated game server information.
+sudo -u postgres psql
+
+-Creates a new PostgreSQL database named "postgres".
+
+CREATE DATABASE postgres;
+
+-Creates a new PostgreSQL user named "postgres" with the specified password ('your_db_password'). You should replace 'your_db_password' with the actual password you want to set.
+
+CREATE USER postgres WITH PASSWORD 'your_db_password';
+
+-Sets various properties for the PostgreSQL user, such as character encoding, transaction isolation, and timezone.
+sql
+
+ALTER ROLE postgres SET client_encoding TO 'utf8';
+ALTER ROLE postgres SET default_transaction_isolation TO 'read committed';
+ALTER ROLE postgres SET timezone TO 'UTC';
+
+-Grants all privileges on the "postgres" database to the "postgres" user.
+
+GRANT ALL PRIVILEGES ON DATABASE postgres TO postgres;
+
+-Grants superuser privileges to the "postgres" user, allowing it to perform administrative tasks.
+ALTER USER postgres WITH SUPERUSER;
+
+- Creates a table named "ranking" if it doesn't exist, with columns for player_name, kills, deaths, and month_year.
+CREATE TABLE IF NOT EXISTS ranking (
+    player_name VARCHAR(255) PRIMARY KEY,
+    kills INT,
+    deaths INT,
+    month_year VARCHAR(255)
+);
+
+-Exits the PostgreSQL interactive terminal.
+\q
+
+-These commands collectively set up a PostgreSQL database, user, and table for your NetPanzer project. Remember to replace 'your_db_password' with a strong and secure password for your PostgreSQL user.
 
 
-## Customization
+Requirements
+Node.js (https://nodejs.org/)
 
-You can customize the appearance of the web page by editing the `app.js` file and the `createHTMLTable()` function. You can also add more master servers to the `this.masterservers` array in the `GamesNetPanzerBrowser` class constructor if needed.
+License
+This project is licensed under the MIT License.
 
-## Requirements
-
-- Node.js (https://nodejs.org/)
-
-## License
-
-This project is licensed under the [MIT License](LICENSE).
-
-## Author
-
+Author
 Phelipe Silva Costa Figueiredo
 
-## Notes
-
+Notes
 This is a sample project and can be extended and customized as needed to meet your specific requirements. Be sure to consult the NetPanzer documentation and adapt this code as necessary to meet the needs of your gaming community.
-

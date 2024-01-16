@@ -1,8 +1,20 @@
 {
+  "name": "serverbrowser_np",
+  "version": "1.0.0",
+  "description": "serverbrowser",
+  "main": "serverbrowser.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Phelipe Silva Costa Figueiredo",
+  "license": "ISC",
   "dependencies": {
     "dgram": "^1.0.1",
+    "express": "^4.18.2",
     "http": "^0.0.1-security",
-    "https": "^1.0.0",
-    "net": "^1.0.2"
+    "moment": "^2.30.1",
+    "net": "^1.0.2",
+    "pg": "^8.11.3",
+    "pg-promise": "^11.5.4"
   }
 }
