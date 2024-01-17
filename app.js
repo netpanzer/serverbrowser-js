@@ -223,74 +223,51 @@ class GamesNetPanzerBrowser {
     this.rankingManager.updateRanking();
   }
 
+  // Salva os dados no banco
   saveDataToDatabase(server, serverInfo) {
     console.log('Saving data to ranking database for server:', server.ip, server.port);
-  
+
     const currentMonthYear = new Date().toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
+        year: 'numeric',
+        month: 'long',
     });
-  
+
     serverInfo.players.forEach((player) => {
       const playerName = player.name || 'Unknown';
   
       const playerData = {
-        player_name: playerName,
-        kills: parseInt(player.kills || 0, 10),
-        deaths: parseInt(player.deaths || 0, 10),
-        month_year: currentMonthYear,
+          player_name: playerName,
+          kills: parseInt(player.kills || 0, 10),
+          deaths: parseInt(player.deaths || 0, 10),
+          month_year: currentMonthYear,
       };
   
       console.log('Player data to save to ranking:', playerData);
   
       // Salva os dados do jogador na tabela ranking com a coluna month_year
       this.db.none(
-        `
-        INSERT INTO ranking(player_name, kills, deaths, month_year)
-        VALUES($/player_name/, $/kills/, $/deaths/, $/month_year/)
-        ON CONFLICT ON CONSTRAINT unique_player_month
-        DO UPDATE SET
-          kills = ranking.kills + EXCLUDED.kills,
-          deaths = ranking.deaths + EXCLUDED.deaths
-        `,
-        playerData
+          `
+      INSERT INTO ranking(player_name, kills, deaths, month_year)
+      VALUES($/player_name/, $/kills/, $/deaths/, $/month_year/)
+      ON CONFLICT ON CONSTRAINT unique_player_month
+      DO UPDATE SET
+        kills = ranking.kills + $/kills/,
+        deaths = ranking.deaths + $/deaths/
+      `,
+          playerData
       )
-        .then(() => {
-          console.log(`Player data saved to ranking database for ${playerData.player_name}`);
-        })
-        .catch((error) => {
-          if (error.code === '23505') {
-            // Código 23505 é específico para violação de chave única (duplicate key value)
-            console.error(`Player data already exists for ${playerData.player_name} in ${playerData.month_year}. Updating instead.`);
-            
-            // Atualiza os dados existentes em vez de inserir novos
-            this.db.none(
-              `
-                UPDATE ranking
-                SET kills = ranking.kills + $/kills/,
-                    deaths = ranking.deaths + $/deaths/
-                WHERE player_name = $/player_name/ AND month_year = $/month_year/
-              `,
-              playerData
-            )
-            .then(() => {
-              console.log(`Player data updated in ranking database for ${playerData.player_name} in ${playerData.month_year}`);
-            })
-            .catch((updateError) => {
-              console.error(`Error updating player data in ranking database: ${updateError}`);
-            });
-          } else {
-            console.error(`Error saving player data to ranking database for ${playerData.player_name} in ${playerData.month_year}: ${error}`);
-          }
-        });
-    });
+          .then(() => {
+              console.log(`Player data saved to ranking database for ${playerData.player_name}`);
+          })
+          .catch((error) => {
+              console.error(`Error saving player data to ranking database for ${playerData.player_name} in ${playerData.month_year}: ${error}`);
+          });
+  });
   
-    // Atualiza o ranking após salvar os dados
-    this.rankingManager.updateRanking();
-  }
+  // Atualiza o ranking após salvar os dados
+  this.rankingManager.updateRanking();
+}
   
-  
-
   startHTTPServer() {
     const options = {
       key: fs.readFileSync('/etc/letsencrypt/live/your_directory/privkey.pem'), // Substitua com o caminho da sua chave privada
