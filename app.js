@@ -228,76 +228,87 @@ class GamesNetPanzerBrowser {
     console.log('Saving data to ranking database for server:', server.ip, server.port);
 
     const currentMonthYear = new Date().toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
+      year: 'numeric',
+      month: 'long',
     });
 
     serverInfo.players.forEach((player) => {
       const playerName = player.name || 'Unknown';
-  
+
       const playerData = {
-          player_name: playerName,
-          kills: parseInt(player.kills || 0, 10),
-          deaths: parseInt(player.deaths || 0, 10),
-          month_year: currentMonthYear,
+        player_name: playerName,
+        kills: parseInt(player.kills || 0, 10),
+        deaths: parseInt(player.deaths || 0, 10),
+        month_year: currentMonthYear,
       };
-  
+
       console.log('Player data to save to ranking:', playerData);
-  
+
       // Salva os dados do jogador na tabela ranking com a coluna month_year
       this.db.none(
-          `
-      INSERT INTO ranking(player_name, kills, deaths, month_year)
-      VALUES($/player_name/, $/kills/, $/deaths/, $/month_year/)
-      ON CONFLICT ON CONSTRAINT unique_player_month
-      DO UPDATE SET
-        kills = ranking.kills + $/kills/,
-        deaths = ranking.deaths + $/deaths/
-      `,
-          playerData
+        `
+        INSERT INTO ranking(player_name, kills, deaths, month_year)
+        VALUES($/player_name/, $/kills/, $/deaths/, $/month_year/)
+        ON CONFLICT (player_name)
+        DO UPDATE SET
+            kills = ranking.kills + $/kills/,
+            deaths = ranking.deaths + $/deaths/
+        `,
+        playerData
       )
-          .then(() => {
-              console.log(`Player data saved to ranking database for ${playerData.player_name}`);
-          })
-          .catch((error) => {
-              console.error(`Error saving player data to ranking database for ${playerData.player_name} in ${playerData.month_year}: ${error}`);
-          });
-  });
-  
-  // Atualiza o ranking após salvar os dados
-  this.rankingManager.updateRanking();
-}
-  
-  startHTTPServer() {
-    const options = {
-      key: fs.readFileSync('/etc/letsencrypt/live/your_directory/privkey.pem'), // Substitua com o caminho da sua chave privada
-      cert: fs.readFileSync('/etc/letsencrypt/live/your_directory/fullchain.pem'), // Substitua com o caminho do seu certificado
-    };
-
-    const server = https.createServer(options, async (req, res) => {
-      if (req.url === '/ranking') {
-        const rankingHTMLFilePath = path.join(__dirname, 'ranking', 'ranking.html');
-        const rankingHTML = fs.readFileSync(rankingHTMLFilePath, 'utf-8');
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        res.end(rankingHTML);
-      } else if (req.url === '/hall') {
-        const hall = new Hall(this.db);
-        const hallHtml = await hall.getTopPlayersHtml();
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        res.end(hallHtml);
-      } else {
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        res.end(this.createHTMLTable());
-      }
+        .then(() => {
+          console.log(`Player data saved to ranking database for ${playerData.player_name}`);
+        })
+        .catch((error) => {
+          console.error(`Error saving player data to ranking database for ${playerData.player_name} in ${playerData.month_year}: ${error}`);
+        });
     });
 
-    server.listen(8080, () => {
-      console.log('HTTP server is running on port 8080');
-    });
+    // Atualiza o ranking após salvar os dados
+    this.rankingManager.updateRanking();
   }
+          .then(() => {
+  console.log(`Player data saved to ranking database for ${playerData.player_name}`);
+})
+          .catch ((error) => {
+  console.error(`Error saving player data to ranking database for ${playerData.player_name} in ${playerData.month_year}: ${error}`);
+});
+  });
 
-  createHTMLTable() {
-    let html = `
+// Atualiza o ranking após salvar os dados
+this.rankingManager.updateRanking();
+}
+
+startHTTPServer() {
+  const options = {
+    key: fs.readFileSync('/etc/letsencrypt/live/your_directory/privkey.pem'), // Substitua com o caminho da sua chave privada
+    cert: fs.readFileSync('/etc/letsencrypt/live/your_directory/fullchain.pem'), // Substitua com o caminho do seu certificado
+  };
+
+  const server = https.createServer(options, async (req, res) => {
+    if (req.url === '/ranking') {
+      const rankingHTMLFilePath = path.join(__dirname, 'ranking', 'ranking.html');
+      const rankingHTML = fs.readFileSync(rankingHTMLFilePath, 'utf-8');
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(rankingHTML);
+    } else if (req.url === '/hall') {
+      const hall = new Hall(this.db);
+      const hallHtml = await hall.getTopPlayersHtml();
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(hallHtml);
+    } else {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(this.createHTMLTable());
+    }
+  });
+
+  server.listen(8080, () => {
+    console.log('HTTP server is running on port 8080');
+  });
+}
+
+createHTMLTable() {
+  let html = `
       <html>
         <head>
           <title>Game Servers</title>
@@ -315,18 +326,18 @@ class GamesNetPanzerBrowser {
               <th>Info Players</th>
             </tr>`;
 
-    Object.values(this.gameservers).forEach(server => {
-      const cache = server.cache || {};
-      let playersData = '<ul>';
-      cache.players.forEach((player, index) => {
-        playersData += `
+  Object.values(this.gameservers).forEach(server => {
+    const cache = server.cache || {};
+    let playersData = '<ul>';
+    cache.players.forEach((player, index) => {
+      playersData += `
           <li>
             ${player.name || 'Unknown'}: Kills: ${player.kills || '0'}, Deaths: ${player.deaths || '0'}
           </li>`;
-      });
-      playersData += '</ul>';
+    });
+    playersData += '</ul>';
 
-      html += `
+    html += `
         <tr>
           <td data-label="Porta">${server.port}</td>
           <td data-label="Servidor">${cache.hostname || 'N/A'}</td>
@@ -335,18 +346,18 @@ class GamesNetPanzerBrowser {
           <td data-label="Players">${cache.numplayers || '0'}</td>
           <td data-label="Info Players">${playersData}</td>
         </tr>`;
-    });
+  });
 
-    html += `
+  html += `
           </table>
         </body>
       </html>`;
-    return html;
-  }
+  return html;
+}
 
-  getCSS() {
-    // Implemente a lógica de obtenção do CSS conforme estava no código original
-    return `
+getCSS() {
+  // Implemente a lógica de obtenção do CSS conforme estava no código original
+  return `
     body {
         background-color: #f4f4f4;
         color: #333;
@@ -414,16 +425,16 @@ class GamesNetPanzerBrowser {
         }
       }
   `;
-  }
+}
 
 
-  startServerRefresh() {
-    setInterval(() => {
-      Object.values(this.gameservers).forEach((server) => {
-        this.queryServerStatus(server);
-      });
-    }, this.refreshInterval);
-  }
+startServerRefresh() {
+  setInterval(() => {
+    Object.values(this.gameservers).forEach((server) => {
+      this.queryServerStatus(server);
+    });
+  }, this.refreshInterval);
+}
 }
 
 
