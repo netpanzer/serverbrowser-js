@@ -103,4 +103,4 @@ Feel free to open issues or pull requests. Ideas:
 
 ## License
 
-ISC
+GPL v3
