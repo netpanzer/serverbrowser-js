@@ -1,138 +1,141 @@
-const path = require('path');
-const fs = require('fs');
+// ranking.js
+const path = require("path");
+const fs = require("fs");
+const Database = require("better-sqlite3");
 
-class RankingManager {
-  constructor(monthlyStats, db) {
-    this.monthlyStats = monthlyStats;
-    this.db = db;
-  }
+// Ensure the folder where the DB will be saved
+const rankingFolder = path.join(__dirname, "ranking_data");
+if (!fs.existsSync(rankingFolder)) fs.mkdirSync(rankingFolder);
 
-  updateRanking() {
-    // Obter o mês e ano correntes
-    const currentMonthYear = new Date().toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-    });
+// Create / open the database
+const dbPath = path.join(rankingFolder, "ranking.db");
+const db = new Database(dbPath);
 
-    // Consultar o banco de dados para obter os top 10 jogadores para o mês e ano correntes
-    this.db.any(`
-      SELECT * FROM ranking 
-      WHERE month_year = $1
-      ORDER BY kills DESC NULLS LAST, deaths ASC NULLS LAST LIMIT 10
-    `, currentMonthYear)
-      .then((rows) => {
-        // Mapear os dados do ranking
-        const rankingPlayers = rows.map((row, index) => {
-          return {
-            rank: index + 1,
-            name: row.player_name || 'Unknown',
-            kills: row.kills || 0,
-            deaths: row.deaths || 0,
-          };
-        });
+// Create table if it does not exist
+db.exec(`
+  CREATE TABLE IF NOT EXISTS rankings (
+    name TEXT NOT NULL,
+    kills INTEGER DEFAULT 0,
+    deaths INTEGER DEFAULT 0,
+    points INTEGER DEFAULT 0,
+    month_year TEXT NOT NULL,
+    PRIMARY KEY (name, month_year)
+  )
+`);
 
-        // Atualizar o arquivo HTML do ranking
-        const rankingHTMLFilePath = path.join(__dirname, 'ranking', 'ranking.html');
-        fs.writeFileSync(rankingHTMLFilePath, this.createRankingHTML(rankingPlayers));
+// Table to store the last known state per server+player, persistent across restarts
+db.exec(`
+  CREATE TABLE IF NOT EXISTS last_stats (
+    server TEXT NOT NULL,
+    name TEXT NOT NULL,
+    kills INTEGER DEFAULT 0,
+    deaths INTEGER DEFAULT 0,
+    points INTEGER DEFAULT 0,
+    month_year TEXT NOT NULL,
+    PRIMARY KEY (server, name, month_year)
+  )
+`);
 
-        console.log(`Updated ranking: ${rankingHTMLFilePath}`);
-      })
-      .catch(error => {
-        console.error(`Error fetching ranking data from database: ${error}`);
-      });
-  }
+// =============================
+// ======= HELPER FUNCTIONS =======
+// =============================
 
-
-  createRankingHTML(rankingPlayers) {
-    let html = `<html><head><title>Ranking TOP 10 Jogadores</title>
-      <meta name="viewport" content="width=device-width, initial-scale=1">
-      <style>${this.getCSS()}</style></head><body>`;
-    html += '<h1>Ranking TOP 10 Jogadores</h1>';
-    html += '<table>';
-    html += '<tr><th>Classificação</th><th>Jogador</th><th>Kills</th><th>Deaths</th></tr>';
-    rankingPlayers.forEach((player) => {
-      html += `<tr>
-                  <td data-label="Classificação">${player.rank}</td>
-                  <td data-label="Jogador">${player.name || 'Unknown'}</td>
-                  <td data-label="Kills">${player.kills}</td>
-                  <td data-label="Deaths">${player.deaths}</td>
-               </tr>`;
-    });
-    html += '</table></body></html>';
-    return html;
-  }
-
-  getCSS() {
-    // Implemente a lógica de obtenção do CSS conforme estava no código original
-    return `
-    body {
-      background-color: #f4f4f4;
-      color: #333;
-      font-family: 'Arial', sans-serif;
-      margin: 0;
-      padding: 0;
-  }
-  
-  h1 {
-      border-bottom: 2px solid #3498db;
-      padding-bottom: 10px;
-      color: #3498db;
-  }
-  
-  table {
-      border-collapse: collapse;
-      width: 100%;
-      margin-top: 20px;
-  }
-  
-  th, td {
-      border: 1px solid #ddd;
-      padding: 12px;
-      text-align: left;
-  }
-  
-  th {
-      background-color: #3498db;
-      color: #fff;
-  }
-  
-  tr:nth-child(even) {
-      background-color: #f2f2f2;
-  }
-  
-  a {
-      color: #3498db;
-      text-decoration: none;
-  }
-  
-  a:hover {
-      text-decoration: underline;
-  }
-  
-  /* Estilo para telas pequenas */
-  @media screen and (max-width: 768px) {
-      body {
-          font-size: 14px;
-      }
-  
-      td:not(:last-child)::before {
-          display: block;
-          content: attr(data-label) ":";
-          font-weight: bold;
-          margin-bottom: 5px;
-      }
-  
-      td {
-          border: none;
-          position: relative;
-          padding-top: 5px;
-          padding-bottom: 5px;
-          white-space: normal;
-          text-align: left;
-      }
-  }
-  `;
-  }
+// Returns current month-year string in format YYYY-MM
+function getCurrentMonthYear() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
 
-module.exports = RankingManager;
+// Update or insert player statistics for the month
+function updatePlayerStats(name, kills, deaths, points, monthYear) {
+  const stmt = db.prepare(`
+    INSERT INTO rankings (name, kills, deaths, points, month_year)
+    VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT(name, month_year)
+    DO UPDATE SET
+      kills = kills + excluded.kills,
+      deaths = deaths + excluded.deaths,
+      points = points + excluded.points
+  `);
+  stmt.run(name, kills, deaths, points, monthYear);
+}
+
+// Get ranking for a specific month with optional search, pagination
+function getRanking(monthYear, search = "", limit = 20, offset = 0) {
+  let sql = `
+    SELECT name, kills, deaths, points
+    FROM rankings
+    WHERE month_year = ?
+  `;
+  const params = [monthYear];
+
+  if (search) {
+    sql += ` AND name LIKE ?`;
+    params.push(`%${search}%`);
+  }
+
+  // Order by points descending, then kills descending, then deaths ascending
+  sql += ` ORDER BY points DESC, kills DESC, deaths ASC LIMIT ? OFFSET ?`;
+  params.push(limit, offset);
+
+  return db.prepare(sql).all(...params);
+}
+
+// Count total players for a month (useful for pagination)
+function countPlayers(monthYear, search = "") {
+  let sql = `SELECT COUNT(*) AS total FROM rankings WHERE month_year = ?`;
+  const params = [monthYear];
+
+  if (search) {
+    sql += ` AND name LIKE ?`;
+    params.push(`%${search}%`);
+  }
+
+  return db.prepare(sql).get(...params).total;
+}
+
+// Return the last known stats (kills, deaths, points) for a player on a server
+function getLastStats(server, name, monthYear) {
+  const row = db
+    .prepare(
+      `SELECT kills, deaths, points FROM last_stats WHERE server = ? AND name = ? AND month_year = ?`
+    )
+    .get(server, name, monthYear);
+  if (!row) return { kills: 0, deaths: 0, points: 0 };
+  return { kills: row.kills || 0, deaths: row.deaths || 0, points: row.points || 0 };
+}
+
+// Return a map { name -> {kills,deaths,points} } with all known players for a server in the month
+function getLastStatsForServer(server, monthYear) {
+  const rows = db
+    .prepare(
+      `SELECT name, kills, deaths, points FROM last_stats WHERE server = ? AND month_year = ?`
+    )
+    .all(server, monthYear);
+  const map = {};
+  for (const r of rows)
+    map[r.name] = { kills: r.kills || 0, deaths: r.deaths || 0, points: r.points || 0 };
+  return map;
+}
+
+// Insert or update the last known stats for a player on a server
+function upsertLastStats(server, name, kills, deaths, points, monthYear) {
+  const stmt = db.prepare(
+    `INSERT INTO last_stats (server, name, kills, deaths, points, month_year)
+     VALUES (?, ?, ?, ?, ?, ?)
+     ON CONFLICT(server, name, month_year)
+     DO UPDATE SET kills = excluded.kills, deaths = excluded.deaths, points = excluded.points`
+  );
+  stmt.run(server, name, kills, deaths, points, monthYear);
+}
+
+module.exports = {
+  getCurrentMonthYear,
+  updatePlayerStats,
+  getRanking,
+  countPlayers,
+  // helpers for persisting last-known server stats
+  getLastStats,
+  getLastStatsForServer,
+  upsertLastStats,
+};

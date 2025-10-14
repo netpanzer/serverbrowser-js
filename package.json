@@ -1,20 +1,16 @@
 {
-  "name": "serverbrowser_np",
+  "name": "server_browser_netpanzer",
   "version": "1.0.0",
-  "description": "serverbrowser",
-  "main": "serverbrowser.js",
+  "description": "",
+  "main": "ranking.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Phelipe Silva Costa Figueiredo",
+  "keywords": [],
+  "author": "",
   "license": "ISC",
+  "type": "commonjs",
   "dependencies": {
-    "dgram": "^1.0.1",
-    "express": "^4.18.2",
-    "http": "^0.0.1-security",
-    "moment": "^2.30.1",
-    "net": "^1.0.2",
-    "pg": "^8.11.3",
-    "pg-promise": "^11.5.4"
+    "better-sqlite3": "^12.4.1"
   }
 }
