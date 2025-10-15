@@ -60,7 +60,8 @@ function updatePlayerStats(name, kills, deaths, points, monthYear) {
 }
 
 // Pega ranking de um mês
-function getRanking(monthYear, search = "", limit = 20, offset = 0) {
+function getRanking(monthYear, search = "", limit = 20, offset = 0, order = "points") {
+  // order: 'points' (default), 'kills', 'strength', 'ratio'
   let sql = `
     SELECT name, kills, deaths, points
     FROM rankings
@@ -73,8 +74,21 @@ function getRanking(monthYear, search = "", limit = 20, offset = 0) {
     params.push(`%${search}%`);
   }
 
-  // Ordenação: prioriza pontos (pontuação/score), depois kills, e por fim menos deaths
-  sql += ` ORDER BY points DESC, kills DESC, deaths ASC LIMIT ? OFFSET ?`;
+  // Escolhe a cláusula ORDER BY conforme o modo solicitado
+  if (order === 'kills') {
+    sql += ` ORDER BY kills DESC, points DESC, deaths ASC`;
+  } else if (order === 'strength') {
+    // calcula índice composto 2*kills + points - 0.5*deaths
+    sql += ` ORDER BY (2.0*kills + 1.0*points - 0.5*deaths) DESC`;
+  } else if (order === 'ratio') {
+    // evita divisão por zero adicionando 1.0
+    sql += ` ORDER BY (CAST(kills + 1.0 AS REAL) / CAST(deaths + 1.0 AS REAL)) DESC`;
+  } else {
+    // default: pontos, depois kills, menos deaths
+    sql += ` ORDER BY points DESC, kills DESC, deaths ASC`;
+  }
+
+  sql += ` LIMIT ? OFFSET ?`;
   params.push(limit, offset);
 
   return db.prepare(sql).all(...params);

@@ -35,4 +35,14 @@
   "champrate":"Taxa Champ",
   "champrate_desc":"Pontos por kill (points / kills).",
   "strength_desc":"Índice composto: 2*kills + points - 0.5*deaths (valor arbitrário para ranking)."
+  ,"order_points":"Pontos",
+  "order_points_desc":"Listar por pontos (maior primeiro). Útil quando pontos são a métrica principal.",
+  "order_kills":"Eliminações",
+  "order_kills_desc":"Listar por total de eliminações (maior primeiro). Destaque para quem mais mata.",
+  "order_strength":"Força",
+  "order_strength_desc":"Listar por um índice composto: 2*kills + points - 0.5*deaths. Combina eliminações, pontos e penaliza mortes.",
+  "order_ratio":"Razão Kills/Deaths",
+  "order_ratio_desc":"(kills+1)/(deaths+1) para favorecer eficiência evitando divisão por zero.",
+  "order_all":"Rankings"
+  ,"no_players":"Sem jogadores"
 }

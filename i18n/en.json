@@ -35,4 +35,14 @@
   "champrate":"Champ Rate",
   "champrate_desc":"Points per kill (points / kills).",
   "strength_desc":"Composite index: 2*kills + points - 0.5*deaths (arbitrary value for ranking)."
+  ,"order_points":"Points",
+  "order_points_desc":"Sorts by points (highest first). Useful when points are the primary score metric.",
+  "order_kills":"Kills",
+  "order_kills_desc":"Sorts by total kills (highest first). Useful to highlight players with most eliminations.",
+  "order_strength":"Strength",
+  "order_strength_desc":"Sorts by a composite index: 2*kills + points - 0.5*deaths. Balances kills, points and penalizes deaths.",
+  "order_ratio":"Kills/Deaths Ratio",
+  "order_ratio_desc":"Sorts by (kills+1)/(deaths+1) to favor efficiency while avoiding division by zero.",
+  "order_all":"All rankings"
+  ,"no_players":"No players"
 }

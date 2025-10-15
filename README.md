@@ -120,3 +120,4 @@ Files principais
 Contributing
 - Pull requests e issues são bem-vindos (sugestões: adicionar script `start` em package.json, completar catálogo i18n, adicionar testes).
 
+License: GLP 3
