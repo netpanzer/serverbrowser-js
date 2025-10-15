@@ -1,23 +1,23 @@
 // statistics.js
-// Functions to compute derived statistics from the `rankings` table.
-// Data source: `getRanking(monthYear)` (each record: { name, kills, deaths, points }).
+// Funções para calcular estatísticas derivadas a partir da tabela `rankings`.
+// Fonte dos dados: `getRanking(monthYear)` (cada registro: { name, kills, deaths, points }).
 //
-// Improvements in this version:
-// - Uses `kills + deaths` as "actions" when `games` is not available.
-// - Calculates normalized rates (percentiles where appropriate) and a composite `strength` index.
-// - Avoids division-by-zero and documents assumptions.
+// Melhorias nesta versão:
+// - Usa `kills + deaths` como "actions" (ações registradas) quando `games` não existe.
+// - Calcula taxas normalizadas (percentuais quando faz sentido) e um índice composto `strength`.
+// - Evita divisões por zero e documenta suposições.
 //
-// Main metrics:
+// Principais métricas:
 //  actionCount       = kills + deaths
-//  activityRate      = actionCount (absolute number of actions in the month)
-//  expertRate        = kills / actionCount (0..1) → proportion of actions that are kills
-//  killerRate        = (kills / actionCount) * 100 → kills per 100 actions (%)
-//  efficiencyRate    = points / max(1, actionCount) → points per action
-//  champRate         = points / max(1, kills) → points per kill (when >0)
+//  activityRate      = actionCount (número absoluto de ações no mês)
+//  expertRate        = kills / actionCount (0..1) → proporção de ações que são kills
+//  killerRate        = (kills / actionCount) * 100 → kills por 100 ações (percent)
+//  efficiencyRate    = points / max(1, actionCount) → pontos por ação
+//  champRate         = points / max(1, kills) → pontos por kill (quando >0)
 //  strength          = weighted composite: 2*kills + 1*points - 0.5*deaths
 //
-// Note: without a real `games` field, per-game metrics are not possible; to get per-game stats
-// you should record `games_played` in the DB.
+// Observação: sem um campo `games` real, as métricas "por jogo" não são possíveis; se
+// você quiser métricas por jogo, devemos adicionar/registrar `games_played` no banco.
 
 const { getRanking, getCurrentMonthYear } = require("./ranking");
 
@@ -30,20 +30,20 @@ function calculateStats(player) {
   const deaths = Number(player.deaths || 0);
   const points = Number(player.points || 0);
 
-  const actionCount = kills + deaths; // total observed actions
+  const actionCount = kills + deaths; // total de ações observadas
 
-  const activityRate = actionCount; // actions in the month (raw count)
+  const activityRate = actionCount; // ações no mês (bruto)
 
-  const expertRate = actionCount ? kills / actionCount : 0; // fraction [0..1]
+  const expertRate = actionCount ? kills / actionCount : 0; // fração [0..1]
 
-  const killerRate = actionCount ? (kills / actionCount) * 100 : 0; // kills per 100 actions (%)
+  const killerRate = actionCount ? (kills / actionCount) * 100 : 0; // kills por 100 ações (%)
 
-  const efficiencyRate = actionCount ? points / actionCount : 0; // points per action
+  const efficiencyRate = actionCount ? points / actionCount : 0; // pontos por ação
 
-  const champRate = kills ? points / kills : 0; // points per kill
+  const champRate = kills ? points / kills : 0; // pontos por kill
 
-  // Simple composite index — combines volume (kills), value (points), and penalizes deaths
-  // Formula chosen to be intuitive: more kills and points increase strength; deaths reduce it.
+  // Índice composto simples — combina volume (kills), valor (points) e penaliza mortes
+  // Fórmula escolhida para ser intuitiva: mais kills e pontos aumentam força; mortes reduzem.
   const strength = 2 * kills + 1 * points - 0.5 * deaths;
 
   return {
@@ -61,21 +61,23 @@ function calculateStats(player) {
   };
 }
 
-function getAllPlayerStats(monthYear = getCurrentMonthYear(), limit = 500) {
-  const ranking = getRanking(monthYear, "", limit, 0);
+function getAllPlayerStats(monthYear = getCurrentMonthYear(), search = "", limit = 500) {
+  // Agora aceita um parâmetro `search` que é repassado para getRanking,
+  // permitindo filtrar jogadores pelo nome (como no /ranking).
+  const ranking = getRanking(monthYear, search || "", limit, 0);
   return ranking.map(calculateStats);
 }
 
-// Helper function that describes each metric (useful for documentation/UI)
+// Função auxiliar que descreve cada métrica (útil para documentação/UI)
 function describeMetrics() {
   return {
-    activityRate: "Total actions recorded (kills + deaths) in the month.",
-    expertRate: "Proportion of actions that are kills (0..1). Closer to 1 is better.",
-    killerRate: "Kills per 100 actions (percentage).",
-    efficiencyRate: "Points per action (points / (kills + deaths)).",
-    champRate: "Points per kill (points / kills).",
-    strength:
-      "Composite index: 2*kills + points - 0.5*deaths (arbitrary scoring for ranking).",
+    ActivityRate: "Total de ações registradas (kills + deaths) no mês.",
+    ExpertRate: "Proporção de ações que são kills (0..1). Quanto mais próximo de 1, melhor).",
+    KillerRate: "Kills por 100 ações (percentual).",
+    EfficiencyRate: "Pontos por ação (points / (kills+deaths)).",
+    ChampRate: "Pontos por kill (points / kills).",
+    Strength:
+      "Índice composto: 2*kills + points - 0.5*deaths (valor arbitrário para ranking).",
   };
 }
 

@@ -1,106 +1,123 @@
-# Server Browser NetPanzer
+# Server Browser NetPanzer / Guia (PT-BR / EN)
 
-This project implements a server browser and monthly ranking system for NetPanzer.
-It queries master servers, collects UDP responses from game servers, aggregates per-player deltas and persists monthly statistics in a SQLite database.
+Este repositório contém um server browser, ranking e páginas de estatísticas para NetPanzer. Ele coleta informações dos master servers, consulta servidores via UDP, agrega deltas por jogador e persiste estatísticas mensais em SQLite.
 
-## Requirements
+----
 
-- Node.js (recommended 14+)
-- npm (or yarn)
-- Windows users can use WSL to simplify opening ports and using certificates. The project depends on `better-sqlite3`, which may require native build tools.
+PT-BR (como executar)
 
-## Installation
+Pré-requisitos
+- Node.js (14+ recomendado)
+- npm
+- WSL recomendado em Windows para facilitar uso de ferramentas nativas e compilação de `better-sqlite3`.
 
-1. Clone the repository:
-
+Instalação
 ```bash
-# in WSL (e.g. wsl.exe)
+# no WSL
 cd ~
 git clone <repo-url>
 cd serverbrowser_np
-```
-
-2. Install dependencies:
-
-```bash
 npm install
 ```
 
-Note: `better-sqlite3` includes native bindings and may require build tools (e.g. `build-essential` on Linux/WSL). If installation fails, ensure you have the necessary toolchain or use a Node installation that matches your platform.
-
-## Main files
-
-- `server_browser.js` — Main class `GamesNetPanzerBrowser`. Starts the master server polling loop, queries game servers via UDP and exposes an HTTP server (port 3000) and, optionally, HTTPS (port 443) with routes:
-  - `/` — Server list (simple HTML UI)
-  - `/ranking` — Monthly ranking (paginated)
-    - `/statistics` — Advanced statistics page
-
-- `ranking.js` — Persistence and query logic using SQLite (`ranking_data/ranking.db`). Exposes functions such as `updatePlayerStats`, `getRanking`, `countPlayers` and helpers for `last_stats` management.
-
-- `statistics.js` — Functions that compute derived metrics from the `rankings` table (e.g. `strength`, `efficiencyRate`) and produce data for the statistics UI.
-
-## How to run
-
-Run the app locally (HTTP only):
-
+Executando localmente (HTTP)
 ```bash
-# in WSL
-npm start || node server_browser.js
-```
-
-Note: there is no `start` script in `package.json` by default — you can run the app directly with `node server_browser.js`.
-
-### Running with HTTPS (production)
-
-By default the app attempts to start an HTTPS server using commonly used Let's Encrypt paths. To run with HTTPS:
-
-- Set the environment variables `SSL_KEY_PATH` and `SSL_CERT_PATH` to point to your private key and certificate files.
-- Run the process with permission to bind to port 443, or place a reverse proxy (e.g. nginx) in front to handle HTTPS.
-
-You can also disable HTTPS and use only HTTP by setting `DISABLE_HTTPS=1`.
-
-Examples (WSL / Linux):
-
-```bash
-# run HTTP only
-DISABLE_HTTPS=1 node server_browser.js
-
-# run with HTTPS (assuming files exist)
-SSL_KEY_PATH=/path/to/privkey.pem SSL_CERT_PATH=/path/to/fullchain.pem node server_browser.js
-```
-
-On Windows (cmd/PowerShell) environment variable syntax differs; in PowerShell:
-
-```powershell
-$env:SSL_KEY_PATH = 'C:\path\to\privkey.pem'
-$env:SSL_CERT_PATH = 'C:\path\to\fullchain.pem'
+# iniciar servidor (porta 3000)
 node server_browser.js
 ```
 
-## Database
+Executando com HTTPS
+- Defina `SSL_KEY_PATH` e `SSL_CERT_PATH` para os arquivos de chave/certificado.
+- Ou rode com `DISABLE_HTTPS=1` para evitar a tentativa de HTTPS.
 
-SQLite is created automatically at `ranking_data/ranking.db` on first run. The project uses two tables: `rankings` and `last_stats`.
+Exemplos (WSL):
+```bash
+# somente HTTP
+DISABLE_HTTPS=1 node server_browser.js
 
-## Important environment variables
+# com HTTPS (ajuste paths)
+SSL_KEY_PATH=/caminho/privkey.pem SSL_CERT_PATH=/caminho/fullchain.pem node server_browser.js
+```
 
-- `DISABLE_HTTPS` — if `1` or `true`, HTTPS will not be started.
-- `SSL_KEY_PATH` — path to the private key file (when using HTTPS).
-- `SSL_CERT_PATH` — path to the certificate file (when using HTTPS).
+Páginas e como testar idiomas
+- `/` — Lista de servidores (UI)
+- `/ranking` — Ranking mensal (paginado)
+- `/statistics` — Estatísticas avançadas
 
-## Notes and tips
+Para ver as páginas em inglês, adicione `?language=english` na URL. Exemplos:
+```
+http://localhost:3000/?language=english
+http://localhost:3000/ranking?language=english
+http://localhost:3000/statistics?language=english
+```
 
-- The app queries UDP status endpoints for servers reported by the master server `netpanzer.io:28900`. If no servers appear, check UDP connectivity and firewall rules.
-- `better-sqlite3` may require native build tools on your platform; install the appropriate toolchain if the package fails to build.
-- For public HTTPS deployment, consider running the app behind a reverse proxy (nginx) to manage certificates and ports.
+Para forçar português (pt-BR):
+```
+http://localhost:3000/?language=pt
+http://localhost:3000/ranking?language=pt
+http://localhost:3000/statistics?language=pt
+```
 
-## Contributing
+Observações:
+- Os formulários e links de paginação preservam `language`, então a navegação mantém o idioma selecionado.
+- Se a descrição de alguma métrica ainda aparecer em português quando `language=english` for passado, isso significa que aquela descrição não foi traduzida no catálogo `i18n/en.json` (há fallback para `statistics.js`). Podemos completar as traduções se desejar.
 
-Feel free to open issues or pull requests. Ideas:
+----
 
-- Add a `start` script to `package.json`.
-- Add unit tests for `ranking.js`.
-- Record games played per player to enable per-game metrics.
+EN (how to run)
 
-## License
+Requirements
+- Node.js (14+ recommended)
+- npm
 
-GPL v3
+Installation
+```bash
+# in WSL or Linux
+git clone <repo-url>
+cd serverbrowser_np
+npm install
+```
+
+Run locally (HTTP)
+```bash
+node server_browser.js
+```
+
+Run with HTTPS
+- Set `SSL_KEY_PATH` and `SSL_CERT_PATH` environment variables, or set `DISABLE_HTTPS=1` to disable HTTPS.
+
+Pages and language testing
+- `/` — Servers list
+- `/ranking` — Monthly ranking
+- `/statistics` — Advanced statistics
+
+To view pages in English, append `?language=english` to the URLs:
+```
+http://localhost:3000/?language=english
+http://localhost:3000/ranking?language=english
+http://localhost:3000/statistics?language=english
+```
+
+To force Portuguese:
+```
+http://localhost:3000/?language=pt
+http://localhost:3000/ranking?language=pt
+http://localhost:3000/statistics?language=pt
+```
+
+Notes
+- The UI preserves the `language` query param across searches and pagination.
+- Metric descriptions fall back to `statistics.js` if a translation is missing; I can fully externalize all metric descriptions to `i18n` on request.
+
+----
+
+Files principais
+- `server_browser.js` — servidor principal, rotas e renderização HTML.
+- `ranking.js` — persistência e queries SQLite.
+- `statistics.js` — cálculo de métricas derivadas.
+- `i18n/` — catálogo de traduções (en.json, pt.json) e helper `i18n/index.js`.
+
+Contributing
+- Pull requests e issues são bem-vindos (sugestões: adicionar script `start` em package.json, completar catálogo i18n, adicionar testes).
+
+License: ISC

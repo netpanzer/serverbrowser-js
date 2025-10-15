@@ -3,15 +3,15 @@ const path = require("path");
 const fs = require("fs");
 const Database = require("better-sqlite3");
 
-// Ensure the folder where the DB will be saved
+// Garante a pasta onde o banco será salvo
 const rankingFolder = path.join(__dirname, "ranking_data");
 if (!fs.existsSync(rankingFolder)) fs.mkdirSync(rankingFolder);
 
-// Create / open the database
+// Cria / abre o banco de dados
 const dbPath = path.join(rankingFolder, "ranking.db");
 const db = new Database(dbPath);
 
-// Create table if it does not exist
+// Cria tabela se não existir
 db.exec(`
   CREATE TABLE IF NOT EXISTS rankings (
     name TEXT NOT NULL,
@@ -23,7 +23,7 @@ db.exec(`
   )
 `);
 
-// Table to store the last known state per server+player, persistent across restarts
+// Tabela para armazenar o último estado conhecido por servidor+jogador, persistente entre reinícios
 db.exec(`
   CREATE TABLE IF NOT EXISTS last_stats (
     server TEXT NOT NULL,
@@ -37,16 +37,15 @@ db.exec(`
 `);
 
 // =============================
-// ======= HELPER FUNCTIONS =======
+// ======= FUNÇÕES ÚTEIS =======
 // =============================
 
-// Returns current month-year string in format YYYY-MM
 function getCurrentMonthYear() {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
 
-// Update or insert player statistics for the month
+// Atualiza ou insere estatísticas
 function updatePlayerStats(name, kills, deaths, points, monthYear) {
   const stmt = db.prepare(`
     INSERT INTO rankings (name, kills, deaths, points, month_year)
@@ -60,7 +59,7 @@ function updatePlayerStats(name, kills, deaths, points, monthYear) {
   stmt.run(name, kills, deaths, points, monthYear);
 }
 
-// Get ranking for a specific month with optional search, pagination
+// Pega ranking de um mês
 function getRanking(monthYear, search = "", limit = 20, offset = 0) {
   let sql = `
     SELECT name, kills, deaths, points
@@ -74,14 +73,14 @@ function getRanking(monthYear, search = "", limit = 20, offset = 0) {
     params.push(`%${search}%`);
   }
 
-  // Order by points descending, then kills descending, then deaths ascending
+  // Ordenação: prioriza pontos (pontuação/score), depois kills, e por fim menos deaths
   sql += ` ORDER BY points DESC, kills DESC, deaths ASC LIMIT ? OFFSET ?`;
   params.push(limit, offset);
 
   return db.prepare(sql).all(...params);
 }
 
-// Count total players for a month (useful for pagination)
+// Conta quantos jogadores existem (para paginação)
 function countPlayers(monthYear, search = "") {
   let sql = `SELECT COUNT(*) AS total FROM rankings WHERE month_year = ?`;
   const params = [monthYear];
@@ -94,7 +93,7 @@ function countPlayers(monthYear, search = "") {
   return db.prepare(sql).get(...params).total;
 }
 
-// Return the last known stats (kills, deaths, points) for a player on a server
+// Retorna o último estado conhecido (kills,deaths,points) para um jogador em um servidor
 function getLastStats(server, name, monthYear) {
   const row = db
     .prepare(
@@ -105,26 +104,20 @@ function getLastStats(server, name, monthYear) {
   return { kills: row.kills || 0, deaths: row.deaths || 0, points: row.points || 0 };
 }
 
-// Return a map { name -> {kills,deaths,points} } with all known players for a server in the month
+// Retorna um mapa { name -> {kills,deaths,points} } com todos os players conhecidos para um servidor no mês
 function getLastStatsForServer(server, monthYear) {
   const rows = db
-    .prepare(
-      `SELECT name, kills, deaths, points FROM last_stats WHERE server = ? AND month_year = ?`
-    )
+    .prepare(`SELECT name, kills, deaths, points FROM last_stats WHERE server = ? AND month_year = ?`)
     .all(server, monthYear);
   const map = {};
-  for (const r of rows)
-    map[r.name] = { kills: r.kills || 0, deaths: r.deaths || 0, points: r.points || 0 };
+  for (const r of rows) map[r.name] = { kills: r.kills || 0, deaths: r.deaths || 0, points: r.points || 0 };
   return map;
 }
 
-// Insert or update the last known stats for a player on a server
+// Insere ou atualiza o último estado conhecido para um jogador em um servidor
 function upsertLastStats(server, name, kills, deaths, points, monthYear) {
   const stmt = db.prepare(
-    `INSERT INTO last_stats (server, name, kills, deaths, points, month_year)
-     VALUES (?, ?, ?, ?, ?, ?)
-     ON CONFLICT(server, name, month_year)
-     DO UPDATE SET kills = excluded.kills, deaths = excluded.deaths, points = excluded.points`
+    `INSERT INTO last_stats (server, name, kills, deaths, points, month_year) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(server, name, month_year) DO UPDATE SET kills = excluded.kills, deaths = excluded.deaths, points = excluded.points`
   );
   stmt.run(server, name, kills, deaths, points, monthYear);
 }
@@ -134,8 +127,9 @@ module.exports = {
   updatePlayerStats,
   getRanking,
   countPlayers,
-  // helpers for persisting last-known server stats
+  // helpers de persistência de last-stats
   getLastStats,
   getLastStatsForServer,
   upsertLastStats,
 };
+

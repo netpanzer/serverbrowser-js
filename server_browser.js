@@ -12,6 +12,7 @@ const {
   getRanking,
   countPlayers,
 } = require("./ranking");
+const { normalizeLanguage, t } = require("./i18n");
 
 // =============================
 // ======= SERVER BROWSER ======
@@ -25,7 +26,7 @@ class GamesNetPanzerBrowser {
     this.refreshInterval = 15000;
     this.currentMonthYear = getCurrentMonthYear();
 
-  // used to aggregate updates (prevents duplication when multiple responses arrive)
+    // usado para agregar atualizações (evita duplicação quando múltiplas respostas chegam)
     this.pendingDeltas = {};
     this.flushTimer = null;
 
@@ -33,7 +34,18 @@ class GamesNetPanzerBrowser {
     this.startHybridServer();
   }
 
-  // Apply all aggregated deltas to the DB (runs updatePlayerStats per player)
+  // Escapa texto para inclusão segura em atributos/HTML
+  escapeHtml(str) {
+    if (!str) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  // Aplica todas as deltas agregadas ao banco (executa updatePlayerStats por jogador)
   flushPendingDeltas() {
     const names = Object.keys(this.pendingDeltas);
     if (names.length === 0) return;
@@ -42,10 +54,10 @@ class GamesNetPanzerBrowser {
         const d = this.pendingDeltas[name];
         if (!d) continue;
         try {
-          // update once with the aggregated deltas
+          // atualiza uma vez com os deltas agregados
           updatePlayerStats(name, d.kills || 0, d.deaths || 0, d.points || 0, this.currentMonthYear);
         } catch (e) {
-          console.error('Error applying aggregated delta for', name, e);
+          console.error('Erro ao aplicar delta agregado para', name, e);
         }
       }
     } finally {
@@ -68,8 +80,8 @@ class GamesNetPanzerBrowser {
       return;
     }
 
-  const master = this.mastersstack.pop();
-  console.log(`🌐 Connecting to master ${master.host}:${master.port}`);
+    const master = this.mastersstack.pop();
+    console.log(`🌐 Conectando ao master ${master.host}:${master.port}`);
 
     const client = new net.Socket();
     client.connect(master.port, master.host, () =>
@@ -83,7 +95,7 @@ class GamesNetPanzerBrowser {
     });
 
     client.on("error", (err) => {
-      console.error("❌ Error connecting to master:", err.message);
+      console.error("❌ Erro ao conectar ao master:", err.message);
       this.browseMasters();
     });
   }
@@ -108,15 +120,15 @@ class GamesNetPanzerBrowser {
     serverList.forEach((s) => {
       const key = `${s.ip}:${s.port}`;
       if (!this.gameservers[key]) {
-        console.log("🆕 Server added:", key);
-        // initialize cache and load last persisted stats (if any)
+        console.log("🆕 Servidor adicionado:", key);
+        // inicializa cache e carrega últimos stats persistidos (se houver)
         s.cache = s.cache || { players: [] };
         try {
           const { getLastStatsForServer } = require("./ranking");
           const persisted = getLastStatsForServer(key, this.currentMonthYear);
           s.cache.lastStats = persisted || {};
         } catch (err) {
-          console.warn('⚠️ Could not load persisted lastStats for', key, err.message || err);
+          console.warn('⚠️ Não foi possível carregar lastStats persistidos para', key, err.message || err);
           s.cache.lastStats = {};
         }
         this.gameservers[key] = s;
@@ -142,11 +154,11 @@ class GamesNetPanzerBrowser {
             deaths: Number(p.deaths || 0),
             points: Number(p.points || 0),
           }));
-          // calculate deltas relative to last known state to avoid duplication
+          // calcula deltas em relação ao último estado conhecido para evitar duplicação
           server.cache.lastStats = server.cache.lastStats || {};
           for (const p of newPlayers) {
             const name = p.name;
-            // last can come from in-memory cache or the persisted table loaded in addGameServers
+            // last pode vir do cache em memória ou da tabela persistida carregada no addGameServers
             const last = server.cache.lastStats[name] || { kills: 0, deaths: 0, points: 0 };
             let dk = p.kills - (last.kills || 0);
             let dd = p.deaths - (last.deaths || 0);
@@ -154,27 +166,27 @@ class GamesNetPanzerBrowser {
             if (dk < 0) dk = p.kills;
             if (dd < 0) dd = p.deaths;
 
-            // accumulate in the global deltas buffer to apply in batch
+            // acumula no buffer global de deltas para aplicar em lote
             if (name) {
               const cur = this.pendingDeltas[name] || { kills: 0, deaths: 0, points: 0 };
               cur.kills = (cur.kills || 0) + (dk || 0);
               cur.deaths = (cur.deaths || 0) + (dd || 0);
               cur.points = (cur.points || 0) + (dp || 0);
               this.pendingDeltas[name] = cur;
-              // schedule flush shortly (debounce)
+              // agenda flush em curto prazo (debounce)
               if (!this.flushTimer) {
                 this.flushTimer = setTimeout(() => this.flushPendingDeltas(), 500);
               }
             }
 
-            // update local cache with the absolute state
+            // atualiza cache local com o estado absoluto
             server.cache.lastStats[name] = { kills: p.kills, deaths: p.deaths, points: p.points };
-            // persist the last state for this server+player to survive restarts
+            // persiste o último estado para este servidor+jogador para sobreviver a reinícios
             try {
               const { upsertLastStats } = require("./ranking");
               upsertLastStats(`${server.ip}:${server.port}`, name, p.kills, p.deaths, p.points, this.currentMonthYear);
             } catch (err) {
-              console.warn('⚠️ Failed to persist lastStats for', name, err.message || err);
+              console.warn('⚠️ Falha ao persistir lastStats para', name, err.message || err);
             }
           }
           server.cache.players = newPlayers;
@@ -184,18 +196,18 @@ class GamesNetPanzerBrowser {
           server.cache.numplayers = info.players ? info.players.length : 0;
           
         } catch (err) {
-          console.error("⚠️ Error processing UDP response:", err);
+          console.error("⚠️ Erro ao processar resposta UDP:", err);
         } finally {
           udpClient.close();
         }
       });
 
       udpClient.on("error", (err) => {
-        console.error("⚠️ UDP error:", err.message);
+        console.error("⚠️ Erro UDP:", err.message);
         udpClient.close();
       });
     } catch (err) {
-      console.error("❌ General failure in queryServerStatus:", err);
+      console.error("❌ Falha geral no queryServerStatus:", err);
     }
   }
 
@@ -228,27 +240,81 @@ class GamesNetPanzerBrowser {
 
   getCSS() {
     return `
-    /* Base */
+    /* Base variables */
     :root{--bg:#0f172a;--card:#0b1220;--muted:#94a3b8;--accent:#06b6d4;--glass:rgba(255,255,255,0.04)}
-    body{font-family:Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; background:linear-gradient(180deg,#0b1220 0%, #071027 100%);color:#e6eef8;margin:0;padding:28px}
+
+    /* Page */
+    html,body{height:100%}
+    body{font-family:Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; background:linear-gradient(180deg,#0b1220 0%, #071027 100%);color:#e6eef8;margin:0;padding:28px;-webkit-font-smoothing:antialiased}
     .container{max-width:1200px;margin:0 auto}
-    h1{font-weight:600;margin:0 0 8px 0;color:#fff}
+
+    /* Cards and headings */
+    h1{font-weight:600;margin:0 0 8px 0;color:#fff;font-size:20px}
     .card{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 8px 24px rgba(2,6,23,0.6);margin-bottom:18px}
-    table{width:100%;border-collapse:collapse;margin-top:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:8px;overflow:hidden}
-    thead th{padding:12px 14px;background:linear-gradient(90deg,var(--bg),#07122a);color:#fff;text-align:left;position:relative}
-    tbody td{padding:12px 14px;border-top:1px solid rgba(255,255,255,0.03)}
+
+  /* Ranking header specific */
+  .ranking-header{display:flex;flex-direction:column;gap:8px}
+  .ranking-header .title-row{display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .ranking-header .title-row h1{font-size:20px;margin:0}
+  .ranking-search{display:flex;gap:8px}
+  .ranking-search input[type=text]{min-width:200px;max-width:360px;width:100%}
+
+    /* Table wrapper for horizontal scroll on small screens */
+    .table-wrap{overflow:auto;-webkit-overflow-scrolling:touch;border-radius:8px}
+    table{width:100%;border-collapse:collapse;margin-top:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01))}
+    thead th{padding:12px 14px;background:linear-gradient(90deg,var(--bg),#07122a);color:#fff;text-align:left;position:relative;white-space:nowrap}
+    tbody td{padding:12px 14px;border-top:1px solid rgba(255,255,255,0.03);vertical-align:middle;white-space:nowrap}
     tbody tr:hover td{background:linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02))}
+
+    /* Compact text and badges */
     .muted{color:var(--muted);font-size:13px}
     .badge{display:inline-block;padding:6px 10px;border-radius:999px;background:var(--glass);color:#e6eef8;font-weight:600}
+
+    /* Controls */
     .search{display:flex;gap:8px;align-items:center}
-    input[type=text]{padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
-    a.button{display:inline-block;padding:8px 12px;border-radius:8px;background:linear-gradient(90deg,#06b6d4,#3b82f6);color:#061024;text-decoration:none;font-weight:600}
+    input[type=text]{padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit;min-width:0}
+    a.button, button.button{display:inline-block;padding:8px 12px;border-radius:8px;background:linear-gradient(90deg,#06b6d4,#3b82f6);color:#061024;text-decoration:none;font-weight:600;border:none}
+
     .trophy{font-size:18px;margin-right:6px}
-    @media (max-width:760px){body{padding:12px}.container{padding:0 8px}}
+
+    /* Responsive: stack header and compress table on narrow screens */
+    @media (max-width:900px){
+      h1{font-size:18px}
+      .card{padding:12px}
+      thead th, tbody td{padding:10px 8px}
+    }
+
+    @media (max-width:760px){
+      .ranking-header{gap:6px}
+      .ranking-header .title-row{flex-direction:row}
+      .ranking-search{width:100%}
+      .ranking-search input[type=text]{flex:1 1 auto;min-width:0}
+    }
+
+    @media (max-width:560px){
+      body{padding:12px}
+      .container{padding:0 8px}
+      .card{padding:10px}
+      .topline{flex-direction:column;align-items:flex-start;gap:8px}
+      /* make table more readable on very small screens: use grid rows with label/value */
+      table{border-radius:6px;overflow:hidden}
+      thead{display:none}
+      tbody tr{display:grid;grid-template-columns:1fr;gap:6px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.03)}
+      tbody td{display:block;padding:0;border-top:0;white-space:normal}
+    tbody td::before{content:attr(data-label) ": ";color:var(--muted);font-weight:600;margin-right:6px}
+    /* put the label on its own line for the players column so the list appears below */
+    td[data-label="Jogadores"]::before{display:block;margin-bottom:6px}
+    /* players column may contain many players; allow wrapping and spacing */
+    td[data-label="Jogadores"]{word-break:break-word}
+    td[data-label="Jogadores"] span.muted{display:inline-block;margin-left:6px}
+      /* center pagination badge on small screens */
+      .badge{display:inline-block;margin:6px auto;padding:6px 10px}
+    }
+
     `;
   }
 
-  generateRankingHTML(search = "", page = 1, perPage = 20) {
+  generateRankingHTML(search = "", page = 1, perPage = 20, lang = 'pt') {
     const total = countPlayers(this.currentMonthYear, search);
     const totalPages = Math.ceil(total / perPage);
     const offset = (page - 1) * perPage;
@@ -261,58 +327,55 @@ class GamesNetPanzerBrowser {
       return '';
     };
 
-  let html = `<html><head><title>Monthly Ranking</title><meta name="viewport" content="width=device-width, initial-scale=1"><style>${this.getCSS()}</style></head><body><div class="container">`;
-  html += `<div class="card"><header style="display:flex;justify-content:space-between;align-items:center"><div><h1>Monthly Ranking - ${this.currentMonthYear}</h1><div class="muted">Total: ${total} players</div></div><div><form method="GET" style="display:flex;gap:8px"><input type="text" name="search" placeholder="Search player" value="${search}"><button class="button" type="submit">Search</button></form></div></header></div>`;
+  let html = `<html><head><title>${t(lang,'ranking_title')}</title><meta name="viewport" content="width=device-width, initial-scale=1"><style>${this.getCSS()}</style></head><body><div class="container">`;
+  // header: title + date on one line, search on the next line (use CSS classes)
+  html += `<div class="card"><header class="ranking-header"><div class="title-row"><h1>${t(lang,'ranking_title')}</h1><div class="muted">${this.currentMonthYear}</div></div><div class="muted">${t(lang,'total_players',{ total })}</div><div><form method="GET" class="ranking-search"><input type="text" name="search" placeholder="${t(lang,'search_placeholder')}" value="${this.escapeHtml(search)}"><input type="hidden" name="language" value="${lang}"><button class="button" type="submit">${t(lang,'search_button')}</button></form></div></header></div>`;
 
-  html += `<div class="card"><table class="ranking-table"><thead><tr><th>Rank</th><th>Player</th><th>Kills</th><th>Deaths</th><th>Points</th></tr></thead><tbody>`;
+  html += `<div class="card"><div class="table-wrap"><table class="ranking-table"><thead><tr><th>${t(lang,'rank')}</th><th>${t(lang,'player')}</th><th>${t(lang,'kills')}</th><th>${t(lang,'deaths')}</th><th>${t(lang,'points')}</th></tr></thead><tbody>`;
 
     ranking.forEach((p, i) => {
       const rank = offset + i + 1;
       const trophyEmoji = trophy(rank);
-      html += `<tr><td>${rank} ${trophyEmoji ? `<span class="trophy">${trophyEmoji}</span>` : ''}</td><td>${p.name}</td><td>${p.kills}</td><td>${p.deaths}</td><td>${p.points}</td></tr>`;
+  html += `<tr><td data-label="Rank">${rank} ${trophyEmoji ? `<span class="trophy">${trophyEmoji}</span>` : ''}</td><td data-label="Jogador">${p.name}</td><td data-label="Kills">${p.kills}</td><td data-label="Deaths">${p.deaths}</td><td data-label="Points">${p.points}</td></tr>`;
     });
 
-    html += `</tbody></table></div><div style="text-align:center;margin-top:12px">`;
+  html += `</tbody></table></div><div style="text-align:center;margin-top:12px">`;
     for (let i = 1; i <= totalPages; i++) {
       if (i === page) html += `<span class="badge">${i}</span> `;
       else
-        html += `<a href="/ranking?page=${i}&search=${encodeURIComponent(search)}" class="badge" style="opacity:0.85">${i}</a> `;
+          html += `<a href="/ranking?page=${i}&search=${encodeURIComponent(search)}&language=${lang}" class="badge" style="opacity:0.85">${i}</a> `;
     }
 
     html += `</div></div></body></html>`;
     return html;
   }
 
-  createHTMLTable() {
-    let html = `<html><head><title>NetPanzer Servers</title><meta name="viewport" content="width=device-width, initial-scale=1"><style>${this.getCSS()}</style></head><body><div class="container"><div class="card"><h1>NetPanzer Servers</h1><div class="muted">Servers listed: ${Object.keys(this.gameservers).length}</div></div><div class="card"><table class="servers-table"><thead><tr><th>Port</th><th>Server</th><th>Map</th><th>Style</th><th>Players</th><th>Details</th></tr></thead><tbody>`;
+  createHTMLTable(lang = 'pt') {
+  let html = `<html><head><title>${t(lang,'servers_title')}</title><meta name="viewport" content="width=device-width, initial-scale=1"><style>${this.getCSS()}</style></head><body><div class="container"><div class="card"><h1>${t(lang,'servers_title')}</h1><div class="muted">${t(lang,'servers_listed',{ count: Object.keys(this.gameservers).length })}</div></div><div class="card"><div class="table-wrap"><table class="servers-table"><thead><tr><th>${t(lang,'port')}</th><th>${t(lang,'server')}</th><th>${t(lang,'map')}</th><th>${t(lang,'style')}</th><th>${t(lang,'count')}</th><th>${t(lang,'players')}</th></tr></thead><tbody>`;
     Object.values(this.gameservers).forEach((s) => {
       const c = s.cache || { players: [] };
-      html += `<tr><td>${s.port}</td><td>${c.hostname || "N/A"}</td><td>${c.mapname || "N/A"}</td><td>${c.gamestyle || "N/A"}</td><td>${c.numplayers || 0}</td><td>${
-        c.players
-          .map(
-            (p) =>
-              `${p.name} <span class="muted">(K:${p.kills} D:${p.deaths} P:${p.points})</span>`
-          )
-          .join("<br>") || "<span class='muted'>No players</span>"
-      }</td></tr>`;
+      const details = c.players
+        .map((p) => `${p.name} <span class="muted">(K:${p.kills} D:${p.deaths} P:${p.points})</span>`)
+        .join("<br>") || "<span class='muted'>Sem jogadores</span>";
+      html += `<tr><td data-label="${t(lang,'port')}">${s.port}</td><td data-label="${t(lang,'server')}">${c.hostname || "N/A"}</td><td data-label="${t(lang,'map')}">${c.mapname || "N/A"}</td><td data-label="${t(lang,'style')}">${c.gamestyle || "N/A"}</td><td data-label="${t(lang,'count')}">${c.numplayers || 0}</td><td data-label="${t(lang,'players')}">${details}</td></tr>`;
     });
-    html += `</tbody></table></div></div></body></html>`;
+    html += `</tbody></table></div></div></div></body></html>`;
     return html;
   }
 
   // ==============================
-  // === HYBRID SERVER HTTP + HTTPS
+  // === SERVIDOR HÍBRIDO HTTP + HTTPS
   // ==============================
   startHybridServer() {
     // --- HTTPS ---
-    // Certificate paths can be configured via environment variables:
-    // SSL_KEY_PATH and SSL_CERT_PATH. Set DISABLE_HTTPS=1 to disable.
+    // Agora o caminho para os certificados pode ser configurado por variáveis de ambiente:
+    // SSL_KEY_PATH e SSL_CERT_PATH. Defina DISABLE_HTTPS=1 para desabilitar.
     const disableHttps = process.env.DISABLE_HTTPS === '1' || process.env.DISABLE_HTTPS === 'true';
     if (!disableHttps) {
       const keyPath = process.env.SSL_KEY_PATH || "/etc/letsencrypt/live/server-browser.netpanzer.com.br/privkey.pem";
       const certPath = process.env.SSL_CERT_PATH || "/etc/letsencrypt/live/server-browser.netpanzer.com.br/fullchain.pem";
       try {
-        console.log(`🔐 Attempting to start HTTPS with key=${keyPath} cert=${certPath}`);
+        console.log(`🔐 Tentando iniciar HTTPS com key=${keyPath} cert=${certPath}`);
         const sslOptions = {
           key: fs.readFileSync(keyPath),
           cert: fs.readFileSync(certPath),
@@ -320,13 +383,13 @@ class GamesNetPanzerBrowser {
         const httpsServer = https.createServer(sslOptions, (req, res) => this.handleRequest(req, res));
         httpsServer.listen(443, () => console.log("✅ HTTPS server running on port 443"));
       } catch (err) {
-        console.warn("⚠️ HTTPS not started; check paths/certificates and permission to bind port 443.", err && err.message);
+        console.warn("⚠️ HTTPS não iniciado; verifique paths/certificados e permissão para abrir a porta 443.", err && err.message);
       }
     } else {
-      console.log('ℹ️ HTTPS disabled by DISABLE_HTTPS variable');
+      console.log('ℹ️ HTTPS desabilitado por variável DISABLE_HTTPS');
     }
 
-    // --- HTTP for local testing ---
+    // --- HTTP para testes locais ---
     const httpServer = http.createServer((req, res) => this.handleRequest(req, res));
     httpServer.listen(3000, () => console.log("✅ HTTP server running on http://localhost:3000"));
   }
@@ -337,18 +400,23 @@ class GamesNetPanzerBrowser {
       const protocol = req.connection.encrypted ? "https" : "http";
       const urlObj = new URL(req.url, `${protocol}://${host}`);
 
+      // normaliza o idioma a partir do query param `language` (ex: ?language=english)
+      const lang = normalizeLanguage(urlObj.searchParams.get("language"));
+
       if (urlObj.pathname === "/ranking") {
         const search = urlObj.searchParams.get("search") || "";
         const page = parseInt(urlObj.searchParams.get("page") || "1", 10);
         res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
-        res.end(this.generateRankingHTML(search, page));
-  } else if (urlObj.pathname === "/statistics") {
-    // New route for advanced statistics (UI/visual only) - does not change data collection
-    const { getAllPlayerStats, describeMetrics } = require("./statistics");
-  let stats = getAllPlayerStats();
-  // sort by strength to highlight top 3
-  stats = stats.slice().sort((a,b)=> b.strength - a.strength);
-    const metricsDesc = describeMetrics();
+        res.end(this.generateRankingHTML(search, page, undefined, lang));
+      } else if (urlObj.pathname === "/statistics") {
+        // Nova rota para estatísticas avançadas (apenas UI/visual) - não altera coleta de dados
+        const { getAllPlayerStats, describeMetrics } = require("./statistics");
+        const search = urlObj.searchParams.get("search") || "";
+        // repassa o search para filtrar jogadores na lista exibida
+        let stats = getAllPlayerStats(this.currentMonthYear, search);
+        // Ordena por strength para destacar top 3
+        stats = stats.slice().sort((a,b)=> b.strength - a.strength);
+        const metricsDesc = describeMetrics();
 
         const css = `
           body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial;background:linear-gradient(180deg,#071027, #041025);color:#e6eef8;margin:0;padding:22px}
@@ -369,61 +437,54 @@ class GamesNetPanzerBrowser {
           .topline{display:flex;justify-content:space-between;align-items:center}
         `;
 
-  let html = `<!doctype html><html><head><meta charset="utf-8"><meta name='viewport' content='width=device-width, initial-scale=1'><title>Advanced Statistics</title><style>${this.getCSS()}${css}</style></head><body><div class="container"><div class="card topline"><div><h1>Advanced Statistics - ${this.currentMonthYear}</h1><div class="muted">Total players: ${stats.length}</div></div><div><div class="controls"><input id="search" type="text" placeholder="Search player..." /></div></div></div>`;
+  let html = `<!doctype html><html><head><meta charset="utf-8"><meta name='viewport' content='width=device-width, initial-scale=1'><title>${t(lang,'statistics_title')}</title><style>${this.getCSS()}${css}</style></head><body><div class="container"><div class="card topline"><div><h1>${t(lang,'statistics_title')} - ${this.currentMonthYear}</h1><div class="muted">${t(lang,'total_players_count',{ count: stats.length })}</div></div><div><div class="controls"><form method="GET" action="/statistics"><input id="search" name="search" type="text" placeholder="${t(lang,'search_placeholder')}..." value="${this.escapeHtml(search)}" /><input type="hidden" name="language" value="${lang}" /><button type="submit">${t(lang,'search_button')}</button></form></div></div></div>`;
 
-  // Top 3 highlighted with trophies
-  html += `<div class="card"><h2 style="margin:0 0 8px 0">Top 3 by Strength</h2><div style="display:flex;gap:10px;flex-wrap:wrap">`;
+        // Top 3 destacados com troféus
+  html += `<div class="card"><h2 style="margin:0 0 8px 0">${t(lang,'top3')}</h2><div style="display:flex;gap:10px;flex-wrap:wrap">`;
         const top3 = stats.slice(0,3);
         const trophyFor = (i)=> i===0? '🏆' : i===1? '🥈' : '🥉';
         top3.forEach((p,i)=>{
           const expertWidth = Math.min(100, Math.max(0, p.expertRate * 100));
           const effWidth = Math.min(100, Math.max(0, p.efficiencyRate * 10));
-          html += `<div class="player" style="flex:1 1 220px"><h3>${trophyFor(i)} ${p.name}</h3><div class="small">Strength: <strong>${p.strength}</strong> • K:${p.kills} D:${p.deaths} P:${p.points}</div><div style="margin-top:8px"><div class="small">Expert Rate</div><div class="bar" style="margin-top:6px"><i style="width:${expertWidth}%"></i></div></div><div style="margin-top:8px"><div class="small">Efficiency</div><div class="bar" style="margin-top:6px"><i style="width:${effWidth}%"></i></div></div></div>`;
+          html += `<div class="player" style="flex:1 1 220px"><h3>${trophyFor(i)} ${p.name}</h3><div class="small">${t(lang,'strength')}: <strong>${p.strength}</strong> • K:${p.kills} D:${p.deaths} P:${p.points}</div><div style="margin-top:8px"><div class="small">${t(lang,'expert_rate')}</div><div class="bar" style="margin-top:6px"><i style="width:${expertWidth}%"></i></div></div><div style="margin-top:8px"><div class="small">${t(lang,'efficiency')}</div><div class="bar" style="margin-top:6px"><i style="width:${effWidth}%"></i></div></div></div>`;
         });
         html += `</div></div>`;
 
-  // Players grid (cards)
-  html += `<div class="card"><h2 style="margin:0 0 10px 0">Players</h2><div class="grid">`;
+  // Grid de jogadores (cards)
+  html += `<div class="card"><h2 style="margin:0 0 10px 0">${t(lang,'players_heading')}</h2><div class="grid">`;
         stats.forEach((p, idx)=>{
           const expertWidth = Math.min(100, Math.max(0, p.expertRate * 100));
           const effWidth = Math.min(100, Math.max(0, p.efficiencyRate * 10));
-          html += `<div class="player"><h3>${idx+1}. ${p.name}</h3><div class="small">K:${p.kills} • D:${p.deaths} • P:${p.points} • Strength:${p.strength}</div><div style="margin-top:8px"><div class="small">Expert Rate</div><div class="bar" style="margin-top:6px"><i style="width:${expertWidth}%"></i></div></div><div style="margin-top:8px"><div class="small">Efficiency</div><div class="bar" style="margin-top:6px"><i style="width:${effWidth}%"></i></div></div></div>`;
+          html += `<div class="player"><h3>${idx+1}. ${p.name}</h3><div class="small">K:${p.kills} • D:${p.deaths} • P:${p.points} • ${t(lang,'strength')}:${p.strength}</div><div style="margin-top:8px"><div class="small">${t(lang,'expert_rate')}</div><div class="bar" style="margin-top:6px"><i style="width:${expertWidth}%"></i></div></div><div style="margin-top:8px"><div class="small">${t(lang,'efficiency')}</div><div class="bar" style="margin-top:6px"><i style="width:${effWidth}%"></i></div></div></div>`;
         });
         html += `</div></div>`;
 
-  // metrics description
-  html += `<div class="card"><strong>What does each metric mean?</strong><ul style="margin-top:8px">`;
-  for (const k in metricsDesc) html += `<li><strong>${k}</strong>: ${metricsDesc[k]}</li>`;
-  html += `</ul></div>`;
-
-        // client-side JS: search (no CSV export)
-        html += `<script>
-          (function(){
-            const search = document.getElementById('search');
-            const players = Array.from(document.querySelectorAll('.player'));
-
-            function filter(){
-              const q = search.value.trim().toLowerCase();
-              players.forEach(p => {
-                const name = p.querySelector('h3').innerText.toLowerCase();
-                p.style.display = q? (name.includes(q)? '' : 'none') : '';
-              });
-            }
-            search.addEventListener('input', filter);
-          })();
-        </script>`;
+        // descrição das métricas - usa tradução se disponível, caso contrário usa description gerada
+        html += `<div class="card"><strong>${t(lang,'metrics_desc_title')}</strong><ul style="margin-top:8px">`;
+        for (const k in metricsDesc) {
+          // normaliza a chave para procurar no dicionário de traduções (ex: ActivityRate -> activityrate)
+          const keyLookup = k.toLowerCase();
+          // label traduzido (se existir), caso contrário usa a chave original
+          const translatedLabel = t(lang, keyLookup) !== keyLookup ? t(lang, keyLookup) : k;
+          // procura descrição traduzida (chave como activityrate_desc). Se não existir, usa metricsDesc[k]
+          const descKey = `${keyLookup}_desc`;
+          const translatedDesc = t(lang, descKey);
+          const desc = translatedDesc !== descKey ? translatedDesc : metricsDesc[k] || "";
+          html += `<li><strong>${translatedLabel}</strong>: ${desc}</li>`;
+        }
+        html += `</ul></div>`;
 
         html += `</div></body></html>`;
         res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
         res.end(html);
       } else {
         res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
-        res.end(this.createHTMLTable());
+        res.end(this.createHTMLTable(lang));
       }
     } catch (err) {
-      console.error("❌ Request error:", err);
+      console.error("❌ Erro na requisição:", err);
       res.writeHead(500);
-      res.end("Internal server error.");
+      res.end("Erro interno no servidor.");
     }
   }
 
@@ -432,20 +493,20 @@ class GamesNetPanzerBrowser {
       try {
         Object.values(this.gameservers).forEach((s) => this.queryServerStatus(s));
       } catch (err) {
-        console.error("⚠️ Error in update loop:", err);
+        console.error("⚠️ Erro no loop de atualização:", err);
       }
     }, this.refreshInterval);
   }
 }
 
 // ==============================
-// === GLOBAL ERROR HANDLING
+// === TRATAMENTO DE ERROS GLOBAIS
 // ==============================
-process.on("uncaughtException", (err) => console.error("🔥 Uncaught exception:", err));
-process.on("unhandledRejection", (reason) => console.error("⚡ Unhandled rejection:", reason));
+process.on("uncaughtException", (err) => console.error("🔥 Erro não capturado:", err));
+process.on("unhandledRejection", (reason) => console.error("⚡ Promessa rejeitada:", reason));
 
 // ==============================
-// === EXECUTION
+// === EXECUÇÃO
 // ==============================
 const browser = new GamesNetPanzerBrowser();
 browser.start();
